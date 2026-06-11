@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>0xBlog — Cybersecurity Research</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="assets/css/style.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <a href="index.html" class="nav-logo">0xBlog<span class="cursor">_</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">home</a></li>
+      <li><a href="about.html">about</a></li>
+      <li><a href="https://github.com/yourusername" target="_blank" rel="noopener">github</a></li>
+    </ul>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-inner">
+      <p class="hero-label">// cybersecurity research &amp; writeups</p>
+      <h1 class="hero-title">Exploring the<br>attack surface.</h1>
+      <p class="hero-sub">CTF writeups, vulnerability research, reverse engineering, and notes from the trenches of offensive security.</p>
+    </div>
+    <div class="hero-terminal" aria-hidden="true">
+      <div class="terminal-bar">
+        <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
+        <span class="terminal-title">~/research</span>
+      </div>
+      <div class="terminal-body">
+        <p><span class="t-prompt">$</span> ls -la ./posts</p>
+        <p><span class="t-out">drwxr-xr-x  buffer-overflow-101</span></p>
+        <p><span class="t-out">drwxr-xr-x  sql-injection-deep-dive</span></p>
+        <p><span class="t-out">drwxr-xr-x  reverse-engineering-basics</span></p>
+        <p><span class="t-out">drwxr-xr-x  ctf-htb-machine-writeup</span></p>
+        <p><span class="t-prompt">$</span> <span class="blink-cursor">█</span></p>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <section class="posts-section">
+      <h2 class="section-label">// latest posts</h2>
+
+      <article class="post-card">
+        <div class="post-meta">
+          <span class="post-tag tag-pwn">pwn</span>
+          <time>2025-06-01</time>
+        </div>
+        <h3><a href="posts/buffer-overflow-101.html">Buffer Overflow 101: Stack Smashing in Practice</a></h3>
+        <p>A hands-on breakdown of classic stack-based buffer overflows — from understanding memory layout to crafting a working exploit payload with GDB.</p>
+        <a class="read-more" href="posts/buffer-overflow-101.html">./read-more →</a>
+      </article>
+
+      <article class="post-card">
+        <div class="post-meta">
+          <span class="post-tag tag-web">web</span>
+          <time>2025-05-18</time>
+        </div>
+        <h3><a href="posts/sql-injection-deep-dive.html">SQL Injection Deep Dive: Beyond ' OR 1=1</a></h3>
+        <p>Most tutorials stop at UNION attacks. This post goes further — blind injection, time-based extraction, and WAF bypass techniques with real examples.</p>
+        <a class="read-more" href="posts/sql-injection-deep-dive.html">./read-more →</a>
+      </article>
+
+      <article class="post-card">
+        <div class="post-meta">
+          <span class="post-tag tag-re">re</span>
+          <time>2025-05-04</time>
+        </div>
+        <h3><a href="posts/reverse-engineering-basics.html">Reverse Engineering Basics with Ghidra</a></h3>
+        <p>Setting up Ghidra, navigating decompiled output, identifying function patterns, and cracking a simple crackme challenge step by step.</p>
+        <a class="read-more" href="posts/reverse-engineering-basics.html">./read-more →</a>
+      </article>
+
+      <article class="post-card">
+        <div class="post-meta">
+          <span class="post-tag tag-ctf">ctf</span>
+          <time>2025-04-20</time>
+        </div>
+        <h3><a href="posts/ctf-htb-machine-writeup.html">HTB Machine Writeup: Exploiting a Misconfigured SUID Binary</a></h3>
+        <p>Full walkthrough of a HackTheBox machine — initial recon, foothold via LFI, privilege escalation through a custom SUID binary with a path injection flaw.</p>
+        <a class="read-more" href="posts/ctf-htb-machine-writeup.html">./read-more →</a>
+      </article>
+
+    </section>
+
+    <aside class="sidebar">
+      <div class="sidebar-card">
+        <h3>// topics</h3>
+        <ul class="tag-list">
+          <li><a href="#"><span class="post-tag tag-pwn">pwn</span> binary exploitation</a></li>
+          <li><a href="#"><span class="post-tag tag-web">web</span> web security</a></li>
+          <li><a href="#"><span class="post-tag tag-re">re</span> reverse engineering</a></li>
+          <li><a href="#"><span class="post-tag tag-ctf">ctf</span> ctf writeups</a></li>
+          <li><a href="#"><span class="post-tag tag-net">net</span> network security</a></li>
+        </ul>
+      </div>
+
+      <div class="sidebar-card">
+        <h3>// tools i use</h3>
+        <ul class="tools-list">
+          <li>GDB + pwndbg</li>
+          <li>Burp Suite</li>
+          <li>Ghidra / IDA</li>
+          <li>Nmap / Masscan</li>
+          <li>pwntools</li>
+          <li>Metasploit</li>
+        </ul>
+      </div>
+    </aside>
+
+  </main>
+
+  <footer class="footer">
+    <p>Built with ♥ and too much caffeine &nbsp;·&nbsp; Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
+  </footer>
+
+  <script src="assets/js/main.js"></script>
+</body>
+</html>
