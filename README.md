@@ -1,5 +1,3 @@
-Hello rootxcyberblogs
-
 # 0xBlog — Cybersecurity Research Blog
 
 A minimal, terminal-aesthetic static blog built for GitHub Pages. No build tools, no frameworks — just HTML, CSS, and a bit of vanilla JS.

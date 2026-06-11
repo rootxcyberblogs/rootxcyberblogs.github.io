@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>0xBlog — Cybersecurity Research</title>
+  <title>0xAngad — Cybersecurity Research</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -12,35 +12,38 @@
 <body>
 
   <nav class="nav">
-    <a href="index.html" class="nav-logo">0xBlog<span class="cursor">_</span></a>
+    <a href="index.html" class="nav-logo">0xAngad<span class="cursor">_</span></a>
     <ul class="nav-links">
       <li><a href="index.html" class="active">home</a></li>
       <li><a href="about.html">about</a></li>
-      <li><a href="https://github.com/yourusername" target="_blank" rel="noopener">github</a></li>
+      <li><a href="https://midgetpool.github.io" target="_blank" rel="noopener">github</a></li>
+      <li><a href="https://www.linkedin.com/in/angadsinghchandhok/" target="_blank" rel="noopener">linkedin</a></li>
     </ul>
   </nav>
 
   <header class="hero">
     <div class="hero-inner">
-      <p class="hero-label">// cybersecurity research &amp; writeups</p>
-      <h1 class="hero-title">Exploring the<br>attack surface.</h1>
-      <p class="hero-sub">CTF writeups, vulnerability research, reverse engineering, and notes from the trenches of offensive security.</p>
+      <p class="hero-label">// penetration testing &amp; security research</p>
+      <h1 class="hero-title">Finding the gaps<br>before others do.</h1>
+      <p class="hero-sub">Web application pentesting, network security assessments, vulnerability research, and real-world findings — documented and shared.</p>
     </div>
     <div class="hero-terminal" aria-hidden="true">
       <div class="terminal-bar">
         <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
-        <span class="terminal-title">~/research</span>
+        <span class="terminal-title">~/recon</span>
       </div>
       <div class="terminal-body">
-        <p><span class="t-prompt">$</span> ls -la ./posts</p>
-        <p><span class="t-out">drwxr-xr-x  buffer-overflow-101</span></p>
-        <p><span class="t-out">drwxr-xr-x  sql-injection-deep-dive</span></p>
-        <p><span class="t-out">drwxr-xr-x  reverse-engineering-basics</span></p>
-        <p><span class="t-out">drwxr-xr-x  ctf-htb-machine-writeup</span></p>
+        <p><span class="t-prompt">$</span> nmap -sV --script vuln target.io</p>
+        <p><span class="t-out">Starting Nmap scan...</span></p>
+        <p><span class="t-out">443/tcp  open  https</span></p>
+        <p><span class="t-out">| http-sql-injection: Possible SQLI</span></p>
+        <p><span class="t-out">| http-csrf: Possible CSRF</span></p>
         <p><span class="t-prompt">$</span> <span class="blink-cursor">█</span></p>
       </div>
     </div>
   </header>
+
+  <hr class="section-divider" />
 
   <main class="main">
 
@@ -49,42 +52,52 @@
 
       <article class="post-card">
         <div class="post-meta">
-          <span class="post-tag tag-pwn">pwn</span>
+          <span class="post-tag tag-web">web</span>
           <time>2025-06-01</time>
         </div>
-        <h3><a href="posts/buffer-overflow-101.html">Buffer Overflow 101: Stack Smashing in Practice</a></h3>
-        <p>A hands-on breakdown of classic stack-based buffer overflows — from understanding memory layout to crafting a working exploit payload with GDB.</p>
-        <a class="read-more" href="posts/buffer-overflow-101.html">./read-more →</a>
+        <h3><a href="#">Union-Based SQL Injection: From Login Panel to Full DB Access</a></h3>
+        <p>A walkthrough of a real-world union-based SQLi finding in a company login panel — how I discovered it, confirmed it with SQLMap, and demonstrated full database read/write/drop impact.</p>
+        <a class="read-more" href="#">./read-more →</a>
       </article>
 
       <article class="post-card">
         <div class="post-meta">
           <span class="post-tag tag-web">web</span>
-          <time>2025-05-18</time>
+          <time>2025-05-15</time>
         </div>
-        <h3><a href="posts/sql-injection-deep-dive.html">SQL Injection Deep Dive: Beyond ' OR 1=1</a></h3>
-        <p>Most tutorials stop at UNION attacks. This post goes further — blind injection, time-based extraction, and WAF bypass techniques with real examples.</p>
-        <a class="read-more" href="posts/sql-injection-deep-dive.html">./read-more →</a>
+        <h3><a href="#">IDOR via GraphQL: Accessing Other Users' Profiles Without Credentials</a></h3>
+        <p>Breaking object-level authorization in a GraphQL API — how I identified the vulnerable query, manipulated user IDs in the request, and confirmed full profile access without authentication.</p>
+        <a class="read-more" href="#">./read-more →</a>
       </article>
 
       <article class="post-card">
         <div class="post-meta">
-          <span class="post-tag tag-re">re</span>
-          <time>2025-05-04</time>
+          <span class="post-tag tag-web">web</span>
+          <time>2025-04-28</time>
         </div>
-        <h3><a href="posts/reverse-engineering-basics.html">Reverse Engineering Basics with Ghidra</a></h3>
-        <p>Setting up Ghidra, navigating decompiled output, identifying function patterns, and cracking a simple crackme challenge step by step.</p>
-        <a class="read-more" href="posts/reverse-engineering-basics.html">./read-more →</a>
+        <h3><a href="#">OTP Bypass and Username Enumeration in the Wild</a></h3>
+        <p>How a subtle response time difference exposed a username enumeration flaw, and how that led to a full OTP bypass — techniques I encountered during a real engagement in the IT/BPM sector.</p>
+        <a class="read-more" href="#">./read-more →</a>
       </article>
 
       <article class="post-card">
         <div class="post-meta">
-          <span class="post-tag tag-ctf">ctf</span>
-          <time>2025-04-20</time>
+          <span class="post-tag tag-net">network</span>
+          <time>2025-04-10</time>
         </div>
-        <h3><a href="posts/ctf-htb-machine-writeup.html">HTB Machine Writeup: Exploiting a Misconfigured SUID Binary</a></h3>
-        <p>Full walkthrough of a HackTheBox machine — initial recon, foothold via LFI, privilege escalation through a custom SUID binary with a path injection flaw.</p>
-        <a class="read-more" href="posts/ctf-htb-machine-writeup.html">./read-more →</a>
+        <h3><a href="#">DHCP Snooping and Port Security: Preventing MITM on Layer 2</a></h3>
+        <p>Demonstrated an ARP poisoning attack on a flat network, then hardened Cisco switches with DHCP snooping and port-security to prevent it. Step-by-step config walkthrough included.</p>
+        <a class="read-more" href="#">./read-more →</a>
+      </article>
+
+      <article class="post-card">
+        <div class="post-meta">
+          <span class="post-tag tag-osint">osint</span>
+          <time>2025-03-22</time>
+        </div>
+        <h3><a href="#">Google Dorking to Exposed PII: A Recon Case Study</a></h3>
+        <p>Using OSINT and Google dorks to locate a vendor table directly accessible via URL, despite sitting behind a login page — a real finding that exposed personally identifiable information.</p>
+        <a class="read-more" href="#">./read-more →</a>
       </article>
 
     </section>
@@ -93,23 +106,25 @@
       <div class="sidebar-card">
         <h3>// topics</h3>
         <ul class="tag-list">
-          <li><a href="#"><span class="post-tag tag-pwn">pwn</span> binary exploitation</a></li>
-          <li><a href="#"><span class="post-tag tag-web">web</span> web security</a></li>
-          <li><a href="#"><span class="post-tag tag-re">re</span> reverse engineering</a></li>
-          <li><a href="#"><span class="post-tag tag-ctf">ctf</span> ctf writeups</a></li>
+          <li><a href="#"><span class="post-tag tag-web">web</span> web app security</a></li>
           <li><a href="#"><span class="post-tag tag-net">net</span> network security</a></li>
+          <li><a href="#"><span class="post-tag tag-osint">osint</span> osint &amp; recon</a></li>
+          <li><a href="#"><span class="post-tag tag-pentest">pentest</span> real-world findings</a></li>
+          <li><a href="#"><span class="post-tag tag-ctf">ctf</span> ctf writeups</a></li>
         </ul>
       </div>
 
       <div class="sidebar-card">
         <h3>// tools i use</h3>
         <ul class="tools-list">
-          <li>GDB + pwndbg</li>
           <li>Burp Suite</li>
-          <li>Ghidra / IDA</li>
-          <li>Nmap / Masscan</li>
-          <li>pwntools</li>
-          <li>Metasploit</li>
+          <li>OWASP ZAP</li>
+          <li>Nmap / Nikto</li>
+          <li>SQLMap</li>
+          <li>Amass / Sublist3r</li>
+          <li>Shodan / Maltego</li>
+          <li>Wireshark</li>
+          <li>Postman</li>
         </ul>
       </div>
     </aside>
@@ -117,7 +132,7 @@
   </main>
 
   <footer class="footer">
-    <p>Built with ♥ and too much caffeine &nbsp;·&nbsp; Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
+    <p>Angad Singh &nbsp;·&nbsp; Cybersecurity Specialist &nbsp;·&nbsp; Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
   </footer>
 
   <script src="assets/js/main.js"></script>
