@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>OTP Bypass and Username Enumeration in the Wild — Angad Singh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo">angadsingh.sec</a>
+      <ul class="nav-links">
+        <li><a href="../index.html" class="active">writing</a></li>
+        <li><a href="../about.html">about</a></li>
+        <li><a href="https://github.com/midgetpool" target="_blank" rel="noopener">github</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="page-wrap single">
+    <div class="post-header">
+      <div class="post-meta">
+        <span class="post-tag web">web</span>
+        <time>2025-05-04</time>
+        <span style="font-size:0.75rem;color:var(--ink-muted);">11 min read</span>
+      </div>
+      <h1 class="page-title">OTP Bypass and Username Enumeration in the Wild</h1>
+      <p class="post-intro">Breaking authentication in an IT company's portal — OTP bypass via packet manipulation, username enumeration through response timing, and what the app leaked in its error messages.</p>
+    </div>
+
+    <div class="prose">
+
+      <h2>Background</h2>
+      <p>This was a grey-box assessment on an internal employee portal for a mid-sized IT and BPM company. The application used a two-step login: first a username and password, then an OTP sent to the registered mobile number. On paper, that's a reasonable authentication flow. In practice, the implementation had three distinct flaws that together made the auth completely bypassable.</p>
+      <p>I'll walk through each one in the order I found them, because the sequence matters — each finding opened the door to the next.</p>
+
+      <h2>Finding 1 — Username enumeration via response differences</h2>
+      <p>The first thing I test on any login form is whether the application distinguishes between "wrong username" and "wrong password" — either in the response message, status code, or timing. All three are information leaks.</p>
+      <p>I submitted a login request with a clearly non-existent username and captured the response in Burp Suite:</p>
+
+      <pre><code>POST /auth/login HTTP/1.1
+Host: portal.target.com
+Content-Type: application/json
+
+{ "username": "doesnotexist@company.com", "password": "test1234" }
+
+HTTP/1.1 200 OK
+{ "error": "User not found" }</code></pre>
+
+      <p>Then with a valid username and wrong password:</p>
+
+      <pre><code>{ "username": "valid.user@company.com", "password": "wrongpassword" }
+
+HTTP/1.1 200 OK
+{ "error": "Incorrect password" }</code></pre>
+
+      <p>Two different error messages. The application was explicitly telling me which part of the credential pair was wrong. That's username enumeration — I could now confirm whether any given email address had an account on the platform without needing the password.</p>
+      <p>Beyond the message content, the response times also differed. Valid usernames took ~320ms (the app was hitting a database and then a password hash comparison). Invalid usernames returned in ~40ms — the query returned nothing, so no hash comparison ran. Even if the error messages had been identical, timing alone would have been enough.</p>
+
+      <h2>Finding 2 — Information leakage in error responses</h2>
+      <p>While mapping the application further, I noticed the error responses were more verbose than they needed to be. On certain failed requests, the API was returning internal field names, partial stack traces, and in one case a response body that included the user's registered phone number in masked form — <code>******7823</code> — before the OTP step had even been reached.</p>
+      <p>That masked number was enough to confirm account ownership and, combined with the enumeration finding, meant an attacker could map usernames to partial phone numbers without ever authenticating. For a social engineering or SIM-swap scenario, that's a meaningful starting point.</p>
+      <p>The broader issue here was that the application had no consistent error handling layer. Each endpoint was returning whatever the backend threw, unfiltered.</p>
+
+      <h2>Finding 3 — OTP bypass via packet manipulation</h2>
+      <p>This was the critical finding. After entering valid credentials, the application sent an OTP to the user's registered mobile number and redirected to a verification screen. The request to verify the OTP looked like this:</p>
+
+      <pre><code>POST /auth/verify-otp HTTP/1.1
+Host: portal.target.com
+Content-Type: application/json
+Authorization: Bearer &lt;pre-auth-session-token&gt;
+
+{
+  "username": "valid.user@company.com",
+  "otp": "482610",
+  "otp_verified": false
+}</code></pre>
+
+      <p>The field that caught my attention was <code>"otp_verified": false</code>. The client was sending the verification status to the server — and the server was trusting it. I intercepted the request in Burp Suite and changed that single field:</p>
+
+      <pre><code>{
+  "username": "valid.user@company.com",
+  "otp": "000000",
+  "otp_verified": <strong>true</strong>
+}</code></pre>
+
+      <p>The OTP value itself was wrong. It didn't matter. The server read <code>otp_verified: true</code>, skipped its own validation logic, and issued a fully authenticated session token.</p>
+      <p>The OTP — the entire second factor — was nullified by changing one boolean in the request body.</p>
+
+      <h2>Why this happens</h2>
+      <p>This is a classic case of trusting client-supplied state. The server should be the sole authority on whether an OTP has been verified. The verification result should never travel from client to server — it should be computed server-side and stored in a server-side session. Sending <code>otp_verified</code> in the request body is the equivalent of asking the user to mark their own exam papers.</p>
+      <p>The likely explanation is that the OTP verification was originally handled client-side (a common shortcut in early-stage development), and when server-side verification was added, the old field was never removed — and the server-side check was never made authoritative.</p>
+
+      <h2>Combined impact</h2>
+      <p>Chaining all three findings: an attacker could enumerate valid usernames via error messages, identify accounts of interest, enter those credentials (or brute-force the password — there was no rate limiting), and then bypass the OTP entirely via the <code>otp_verified</code> manipulation. Full account takeover, no SMS access required.</p>
+
+      <h2>Remediation</h2>
+      <ul>
+        <li><strong>Uniform error messages:</strong> Return the same message for invalid username and invalid password — something generic like "Incorrect credentials." Never distinguish between the two.</li>
+        <li><strong>Consistent response timing:</strong> Artificially pad responses to a fixed duration so timing attacks don't reveal whether a username exists.</li>
+        <li><strong>Server-side OTP state only:</strong> Remove <code>otp_verified</code> from the client request entirely. The server generates the OTP, stores a hashed version in the session, and validates the submitted value against that stored hash. The client has no say in the outcome.</li>
+        <li><strong>Centralised error handling:</strong> All API errors should pass through a single error handler that strips internal details before responding. Log the full error server-side, return only a safe, generic message to the client.</li>
+        <li><strong>Rate limiting on auth endpoints:</strong> Both the login and OTP endpoints should enforce rate limiting and lockout after a threshold of failed attempts.</li>
+      </ul>
+
+      <h2>Key takeaway</h2>
+      <p>Authentication bugs rarely exist in isolation. The OTP bypass here was severe on its own — but it was the enumeration finding that made targeting specific accounts possible. When you're testing auth flows, map every request in the sequence before you start manipulating anything. The interesting field is often not in the obvious place.</p>
+
+    </div>
+
+    <a class="back-link" href="../index.html">← Back to writing</a>
+  </div>
+
+  <footer class="footer">
+    <p>Angad Singh · Cybersecurity Specialist · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
