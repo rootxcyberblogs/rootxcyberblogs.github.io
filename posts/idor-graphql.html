@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exploiting IDOR in a GraphQL API — Angad Singh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo">angadsingh.sec</a>
+      <ul class="nav-links">
+        <li><a href="../index.html" class="active">writing</a></li>
+        <li><a href="../about.html">about</a></li>
+        <li><a href="https://github.com/midgetpool" target="_blank" rel="noopener">github</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="page-wrap single">
+    <div class="post-header">
+      <div class="post-meta">
+        <span class="post-tag api">api</span>
+        <time>2025-05-18</time>
+        <span style="font-size:0.75rem;color:var(--ink-muted);">12 min read</span>
+      </div>
+      <h1 class="page-title">Exploiting IDOR in a GraphQL API</h1>
+      <p class="post-intro">A walkthrough of finding and exploiting an Insecure Direct Object Reference in a hotel industry GraphQL endpoint — no credentials needed to access other users' profiles.</p>
+    </div>
+
+    <div class="prose">
+
+      <h2>Background</h2>
+      <p>During a web application penetration test for a client in the hospitality sector, I came across a GraphQL API powering their guest-facing portal. GraphQL is increasingly common in modern apps, and it introduces a specific class of access control risks that traditional REST testing doesn't always catch. This engagement was a good reminder of why you treat every API type on its own terms.</p>
+      <p>The application allowed registered guests to view their own booking details, loyalty points, and personal profile. My goal was to test whether the authorization model actually enforced those boundaries — or just trusted what the client sent.</p>
+
+      <h2>Reconnaissance: Introspection is your friend</h2>
+      <p>The first thing I do with any GraphQL endpoint is check whether introspection is enabled. Many production deployments leave it on, which hands you the entire schema — every type, query, mutation, and field — without needing access to source code.</p>
+
+      <pre><code>POST /graphql HTTP/1.1
+Host: target-hotel-app.com
+Content-Type: application/json
+
+{
+  "query": "{ __schema { types { name fields { name } } } }"
+}</code></pre>
+
+      <p>Introspection was enabled. The schema came back in full. I piped it through <a href="https://github.com/nicholasess/graphql-voyager" target="_blank" rel="noopener">GraphQL Voyager</a> to visualise the relationships, which immediately surfaced a <code>getGuestProfile</code> query that accepted a <code>guestId</code> argument.</p>
+
+      <h2>Identifying the vulnerable query</h2>
+      <p>The query looked like this in the schema:</p>
+
+      <pre><code>type Query {
+  getGuestProfile(guestId: ID!): GuestProfile
+}
+
+type GuestProfile {
+  id: ID
+  fullName: String
+  email: String
+  phone: String
+  loyaltyPoints: Int
+  bookingHistory: [Booking]
+}</code></pre>
+
+      <p>A query that takes a user-supplied ID and returns a profile — with no visible authorization logic in the schema. The question was whether that logic existed server-side. Spoiler: it didn't.</p>
+      <p>I authenticated as a test guest account and captured my own <code>guestId</code> from the response — it was a sequential integer. <code>1042</code>.</p>
+
+      <h2>Exploiting the IDOR</h2>
+      <p>I sent the same <code>getGuestProfile</code> query with a modified ID:</p>
+
+      <pre><code>POST /graphql HTTP/1.1
+Host: target-hotel-app.com
+Content-Type: application/json
+Authorization: Bearer &lt;my_valid_token&gt;
+
+{
+  "query": "{ getGuestProfile(guestId: \"1041\") {
+    id
+    fullName
+    email
+    phone
+    loyaltyPoints
+    bookingHistory { checkIn checkOut roomType }
+  }}"
+}</code></pre>
+
+      <p>The server returned another guest's full profile — name, email, phone number, booking history — without any error or access denied response. My authenticated session had no relation to guest <code>1041</code>. The API simply returned whoever I asked for.</p>
+
+      <p>I iterated across a small range (<code>1038</code>–<code>1045</code>) to confirm it wasn't a one-off. Every request returned a valid profile belonging to a different registered guest.</p>
+
+      <h2>Why GraphQL makes this easy to miss</h2>
+      <p>In a REST API, access control is typically applied at the route level — <code>GET /users/1041</code> can be restricted by middleware before the controller even runs. In GraphQL, there's a single endpoint (<code>/graphql</code>) and a single resolver function per field. Authorization has to be explicitly implemented inside each resolver, or via a dedicated middleware layer like <a href="https://www.graphql-shield.com/" target="_blank" rel="noopener">GraphQL Shield</a>.</p>
+      <p>Many development teams build the data layer first and treat auth as something to layer on later. In GraphQL, "later" often never comes — especially for internal or seemingly low-risk queries.</p>
+
+      <h2>Impact</h2>
+      <p>The exposed data included full names, email addresses, phone numbers, and complete booking histories with room types and dates. For a hospitality application, that's sensitive PII — and booking history specifically can reveal details guests reasonably expect to be private. The sequential ID scheme made mass enumeration trivial; a script could have harvested every guest profile in the database in minutes.</p>
+
+      <h2>Remediation</h2>
+      <p>The fix requires changes at two levels:</p>
+      <ul>
+        <li><strong>Resolver-level authorization:</strong> Every resolver that returns user-specific data should compare the requested resource ID against the authenticated user's identity. If they don't match, return a permission error — not the data.</li>
+        <li><strong>Non-sequential IDs:</strong> Replace integer IDs with UUIDs or other non-enumerable identifiers. This doesn't fix broken access control, but it eliminates the trivial enumeration path and reduces the blast radius of any future IDOR.</li>
+        <li><strong>Disable introspection in production:</strong> Introspection is a development convenience, not a production requirement. Disabling it doesn't prevent exploitation if an attacker has the query names — but it removes the easy schema discovery step.</li>
+      </ul>
+
+      <h2>Key takeaway</h2>
+      <p>GraphQL IDORs are underreported not because they're rare, but because REST-focused testers often treat <code>/graphql</code> as a black box. Always request the schema first. Look for any query or mutation that accepts an ID argument. Then test whether the server enforces that only the authenticated user can access their own resources — because the schema certainly won't do it for you.</p>
+
+    </div>
+
+    <a class="back-link" href="../index.html">← Back to writing</a>
+  </div>
+
+  <footer class="footer">
+    <p>Angad Singh · Cybersecurity Specialist · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
