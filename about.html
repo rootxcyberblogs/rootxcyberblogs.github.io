@@ -3,75 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>About — 0xAngad</title>
+  <title>About — Angad Singh</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
 
   <nav class="nav">
-    <a href="index.html" class="nav-logo">0xAngad<span class="cursor">_</span></a>
-    <ul class="nav-links">
-      <li><a href="index.html">home</a></li>
-      <li><a href="about.html" class="active">about</a></li>
-      <li><a href="https://midgetpool.github.io" target="_blank" rel="noopener">github</a></li>
-      <li><a href="https://www.linkedin.com/in/angadsinghchandhok/" target="_blank" rel="noopener">linkedin</a></li>
-    </ul>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">angadsingh.sec</a>
+      <ul class="nav-links">
+        <li><a href="index.html">writing</a></li>
+        <li><a href="about.html" class="active">about</a></li>
+        <li><a href="https://github.com/midgetpool" target="_blank" rel="noopener">github</a></li>
+      </ul>
+    </div>
   </nav>
 
-  <main class="main single-col">
-    <h1 class="page-title">whoami</h1>
+  <div class="page-wrap single">
+    <p class="section-head">About</p>
 
-    <div class="about-terminal" aria-hidden="true">
-      <div class="terminal-bar">
-        <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
-        <span class="terminal-title">whoami.sh</span>
-      </div>
-      <div class="terminal-body">
-        <p><span class="t-prompt">$</span> cat about.txt</p>
-        <p><span class="t-out">Name    : Angad Singh</span></p>
-        <p><span class="t-out">Role    : Cybersecurity Specialist</span></p>
-        <p><span class="t-out">Focus   : Web App &amp; Network Pentesting</span></p>
-        <p><span class="t-out">HackerOne: 11 reports submitted</span></p>
-        <p><span class="t-out">TryHackMe: 90+ rooms completed</span></p>
-        <p><span class="t-prompt">$</span> <span class="blink-cursor">█</span></p>
-      </div>
-    </div>
+    <h1 class="page-title">Angad Singh</h1>
 
     <div class="prose">
-      <p>I'm a cybersecurity specialist focused on penetration testing — both web application and network/infrastructure. Currently leading the security practice at <strong>Centilytics</strong>, where I handle the company's overall security posture and run engagements covering OWASP Top 10, API security, authentication flaws, and network vulnerabilities.</p>
-
-      <p>Before that, I spent time as a Network Security Engineer at Isourse Technologies, managing firewall and switch infrastructure, running vulnerability assessments, and working as a SOC engineer. I hold a <strong>Master's in Computer Applications (Cybersecurity)</strong> from Jain University, where my thesis focused on phishing threat intelligence in the banking sector.</p>
-
-      <p>This blog is where I document real-world findings, techniques, and lessons from the field — written for practitioners, not beginners.</p>
-
-      <h2>// certifications</h2>
-      <ul>
-        <li>CCNA — Cisco Certified Network Associate</li>
-        <li>Certified in Cybersecurity (CC) — ISC²</li>
-        <li>CEH v12 Candidate — EC-Council</li>
-        <li>Network Security Associate Level 1 — Fortinet</li>
-        <li>90+ rooms on TryHackMe · 11 HackerOne reports</li>
-      </ul>
-
-      <h2>// areas of focus</h2>
-      <ul>
-        <li>Web Application Pentesting — OWASP Top 10, SQLi, XSS, CSRF, IDOR, API Security</li>
-        <li>Authentication &amp; Authorization Bypass, Business Logic Flaws</li>
-        <li>Network Security Assessment, MITM, DNS Spoofing</li>
-        <li>OSINT &amp; Reconnaissance — Shodan, Maltego, Google Dorking</li>
-        <li>Phishing Simulations &amp; Social Engineering</li>
-      </ul>
-
-      <h2>// contact</h2>
-      <p>Find me on <a href="https://www.linkedin.com/in/angadsinghchandhok/" target="_blank" rel="noopener">LinkedIn</a> or check out my work on <a href="https://midgetpool.github.io" target="_blank" rel="noopener">GitHub</a>. Always happy to talk security.</p>
+      <p>I'm a Cybersecurity Specialist currently leading the security function at Centilytics, where I oversee the company's security posture and run penetration testing engagements across infrastructure and web applications — for both internal systems and client-facing platforms.</p>
+      <p>My work sits at the intersection of offensive and defensive security. I spend most of my time finding what breaks before someone else does — whether that's an authentication bypass in a banking portal, an IDOR in a GraphQL API, or a misconfigured switch leaving a network open to MITM attacks.</p>
+      <p>This blog is where I document what I learn. It's technical, hands-on, and written for people who want to understand the <em>why</em>, not just the steps.</p>
     </div>
-  </main>
+
+    <div class="about-grid">
+      <div class="about-block">
+        <h3>Certifications</h3>
+        <ul>
+          <li>Certified in Cybersecurity — ISC²</li>
+          <li>CEH v12 Candidate — EC-Council</li>
+          <li>CCNA — Cisco (ID: CSCO14107856)</li>
+          <li>Network Security Associate L1 — Fortinet</li>
+        </ul>
+      </div>
+      <div class="about-block">
+        <h3>Focus areas</h3>
+        <ul>
+          <li>Web Application Pentesting (OWASP Top 10)</li>
+          <li>API Security &amp; Business Logic Testing</li>
+          <li>Network &amp; Infrastructure Assessment</li>
+          <li>OSINT &amp; Reconnaissance</li>
+          <li>Authentication &amp; Access Control Bypass</li>
+        </ul>
+      </div>
+      <div class="about-block">
+        <h3>Background</h3>
+        <ul>
+          <li>M.C.A. — Cybersecurity, Jain University</li>
+          <li>PGDCA — IGNOU</li>
+          <li>90+ rooms on TryHackMe</li>
+          <li>11 reports submitted on HackerOne</li>
+        </ul>
+      </div>
+      <div class="about-block">
+        <h3>Contact</h3>
+        <ul>
+          <li><a href="https://www.linkedin.com/in/angadsinghchandhok/" target="_blank" rel="noopener">LinkedIn</a></li>
+          <li><a href="https://github.com/midgetpool" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="mailto:1147ad.opoe.381n48ok@gmail.com">Email</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <a class="back-link" href="index.html">← Back to writing</a>
+  </div>
 
   <footer class="footer">
-    <p>Angad Singh &nbsp;·&nbsp; Cybersecurity Specialist &nbsp;·&nbsp; Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
+    <p>Angad Singh · Cybersecurity Specialist · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
   </footer>
 
   <script src="assets/js/main.js"></script>

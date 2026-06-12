@@ -3,136 +3,140 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>0xAngad — Cybersecurity Research</title>
+  <title>Angad Singh — Cybersecurity Blog</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="assets/css/style.css" />
 </head>
 <body>
 
   <nav class="nav">
-    <a href="index.html" class="nav-logo">0xAngad<span class="cursor">_</span></a>
-    <ul class="nav-links">
-      <li><a href="index.html" class="active">home</a></li>
-      <li><a href="about.html">about</a></li>
-      <li><a href="https://midgetpool.github.io" target="_blank" rel="noopener">github</a></li>
-      <li><a href="https://www.linkedin.com/in/angadsinghchandhok/" target="_blank" rel="noopener">linkedin</a></li>
-    </ul>
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">angadsingh.sec</a>
+      <ul class="nav-links">
+        <li><a href="index.html" class="active">writing</a></li>
+        <li><a href="about.html">about</a></li>
+        <li><a href="https://github.com/midgetpool" target="_blank" rel="noopener">github</a></li>
+      </ul>
+    </div>
   </nav>
 
   <header class="hero">
     <div class="hero-inner">
-      <p class="hero-label">// penetration testing &amp; security research</p>
-      <h1 class="hero-title">Finding the gaps<br>before others do.</h1>
-      <p class="hero-sub">Web application pentesting, network security assessments, vulnerability research, and real-world findings — documented and shared.</p>
-    </div>
-    <div class="hero-terminal" aria-hidden="true">
-      <div class="terminal-bar">
-        <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
-        <span class="terminal-title">~/recon</span>
-      </div>
-      <div class="terminal-body">
-        <p><span class="t-prompt">$</span> nmap -sV --script vuln target.io</p>
-        <p><span class="t-out">Starting Nmap scan...</span></p>
-        <p><span class="t-out">443/tcp  open  https</span></p>
-        <p><span class="t-out">| http-sql-injection: Possible SQLI</span></p>
-        <p><span class="t-out">| http-csrf: Possible CSRF</span></p>
-        <p><span class="t-prompt">$</span> <span class="blink-cursor">█</span></p>
-      </div>
+      <p class="hero-kicker">Cybersecurity · Penetration Testing · Research</p>
+      <h1 class="hero-title">Notes from the field.</h1>
+      <p class="hero-bio">Technical writeups on web application security, network pentesting, OSINT, and real-world vulnerability research — from a specialist who does this for a living.</p>
     </div>
   </header>
 
-  <hr class="section-divider" />
+  <div class="page-wrap">
+    <main>
+      <p class="section-head">Latest posts</p>
 
-  <main class="main">
+      <div class="post-list">
 
-    <section class="posts-section">
-      <h2 class="section-label">// latest posts</h2>
+        <article class="post-card">
+          <div class="post-meta">
+            <span class="post-tag web">web</span>
+            <time>2025-06-01</time>
+          </div>
+          <h2><a href="posts/sqli-union-attack.html">Union-Based SQL Injection: From Discovery to Database Dump</a></h2>
+          <p>How I discovered a union-based SQLi in a login panel during an engagement — the recon steps, payload crafting, and how it exposed full read/write access to the database.</p>
+          <a class="read-more" href="posts/sqli-union-attack.html">Read post →</a>
+        </article>
 
-      <article class="post-card">
-        <div class="post-meta">
-          <span class="post-tag tag-web">web</span>
-          <time>2025-06-01</time>
-        </div>
-        <h3><a href="#">Union-Based SQL Injection: From Login Panel to Full DB Access</a></h3>
-        <p>A walkthrough of a real-world union-based SQLi finding in a company login panel — how I discovered it, confirmed it with SQLMap, and demonstrated full database read/write/drop impact.</p>
-        <a class="read-more" href="#">./read-more →</a>
-      </article>
+        <article class="post-card">
+          <div class="post-meta">
+            <span class="post-tag web">web</span>
+            <time>2025-05-18</time>
+          </div>
+          <h2><a href="posts/idor-graphql.html">Exploiting IDOR in a GraphQL API</a></h2>
+          <p>A walkthrough of finding and exploiting an Insecure Direct Object Reference in a hotel industry GraphQL endpoint — no credentials needed to access other users' profiles.</p>
+          <a class="read-more" href="posts/idor-graphql.html">Read post →</a>
+        </article>
 
-      <article class="post-card">
-        <div class="post-meta">
-          <span class="post-tag tag-web">web</span>
-          <time>2025-05-15</time>
-        </div>
-        <h3><a href="#">IDOR via GraphQL: Accessing Other Users' Profiles Without Credentials</a></h3>
-        <p>Breaking object-level authorization in a GraphQL API — how I identified the vulnerable query, manipulated user IDs in the request, and confirmed full profile access without authentication.</p>
-        <a class="read-more" href="#">./read-more →</a>
-      </article>
+        <article class="post-card">
+          <div class="post-meta">
+            <span class="post-tag api">api</span>
+            <time>2025-05-04</time>
+          </div>
+          <h2><a href="posts/otp-bypass-auth.html">OTP Bypass and Username Enumeration in the Wild</a></h2>
+          <p>Breaking authentication in an IT company's portal — OTP bypass via packet manipulation, username enumeration through response timing, and what the app leaked in its error messages.</p>
+          <a class="read-more" href="posts/otp-bypass-auth.html">Read post →</a>
+        </article>
 
-      <article class="post-card">
-        <div class="post-meta">
-          <span class="post-tag tag-web">web</span>
-          <time>2025-04-28</time>
-        </div>
-        <h3><a href="#">OTP Bypass and Username Enumeration in the Wild</a></h3>
-        <p>How a subtle response time difference exposed a username enumeration flaw, and how that led to a full OTP bypass — techniques I encountered during a real engagement in the IT/BPM sector.</p>
-        <a class="read-more" href="#">./read-more →</a>
-      </article>
+        <article class="post-card">
+          <div class="post-meta">
+            <span class="post-tag osint">osint</span>
+            <time>2025-04-15</time>
+          </div>
+          <h2><a href="posts/google-dorking-recon.html">Google Dorking for Recon: Finding What Shouldn't Be Public</a></h2>
+          <p>During an engagement with an adhesive manufacturing company, Google dorking surfaced a vendor table with PII — directly accessible without authentication. A practical guide to structured recon.</p>
+          <a class="read-more" href="posts/google-dorking-recon.html">Read post →</a>
+        </article>
 
-      <article class="post-card">
-        <div class="post-meta">
-          <span class="post-tag tag-net">network</span>
-          <time>2025-04-10</time>
-        </div>
-        <h3><a href="#">DHCP Snooping and Port Security: Preventing MITM on Layer 2</a></h3>
-        <p>Demonstrated an ARP poisoning attack on a flat network, then hardened Cisco switches with DHCP snooping and port-security to prevent it. Step-by-step config walkthrough included.</p>
-        <a class="read-more" href="#">./read-more →</a>
-      </article>
+        <article class="post-card">
+          <div class="post-meta">
+            <span class="post-tag web">web</span>
+            <time>2025-03-30</time>
+          </div>
+          <h2><a href="posts/stored-xss-crm.html">Stored XSS in a CRM Portal: From Notes Field to UI Defacement</a></h2>
+          <p>How injecting a payload into a seemingly innocuous notes field in a quick-commerce CRM caused full defacement of the user interface — and why stored XSS is still underestimated.</p>
+          <a class="read-more" href="posts/stored-xss-crm.html">Read post →</a>
+        </article>
 
-      <article class="post-card">
-        <div class="post-meta">
-          <span class="post-tag tag-osint">osint</span>
-          <time>2025-03-22</time>
-        </div>
-        <h3><a href="#">Google Dorking to Exposed PII: A Recon Case Study</a></h3>
-        <p>Using OSINT and Google dorks to locate a vendor table directly accessible via URL, despite sitting behind a login page — a real finding that exposed personally identifiable information.</p>
-        <a class="read-more" href="#">./read-more →</a>
-      </article>
+        <article class="post-card">
+          <div class="post-meta">
+            <span class="post-tag infra">infra</span>
+            <time>2025-03-10</time>
+          </div>
+          <h2><a href="posts/dhcp-snooping-mitm.html">Preventing MITM with DHCP Snooping and Port Security on Cisco Switches</a></h2>
+          <p>I first demonstrated the attack — then locked it down. A practical guide to DHCP snooping and port-security configurations that stop ARP spoofing and rogue DHCP servers cold.</p>
+          <a class="read-more" href="posts/dhcp-snooping-mitm.html">Read post →</a>
+        </article>
 
-    </section>
+      </div>
+    </main>
 
     <aside class="sidebar">
-      <div class="sidebar-card">
-        <h3>// topics</h3>
-        <ul class="tag-list">
-          <li><a href="#"><span class="post-tag tag-web">web</span> web app security</a></li>
-          <li><a href="#"><span class="post-tag tag-net">net</span> network security</a></li>
-          <li><a href="#"><span class="post-tag tag-osint">osint</span> osint &amp; recon</a></li>
-          <li><a href="#"><span class="post-tag tag-pentest">pentest</span> real-world findings</a></li>
-          <li><a href="#"><span class="post-tag tag-ctf">ctf</span> ctf writeups</a></li>
+      <div class="sidebar-block">
+        <h3>Topics</h3>
+        <ul class="tag-filter">
+          <li><a href="#">Web Application <span class="post-tag web">web</span></a></li>
+          <li><a href="#">API Security <span class="post-tag api">api</span></a></li>
+          <li><a href="#">OSINT &amp; Recon <span class="post-tag osint">osint</span></a></li>
+          <li><a href="#">Infrastructure <span class="post-tag infra">infra</span></a></li>
+          <li><a href="#">CTF Writeups <span class="post-tag ctf">ctf</span></a></li>
         </ul>
       </div>
 
-      <div class="sidebar-card">
-        <h3>// tools i use</h3>
+      <div class="sidebar-block">
+        <h3>Tools I write about</h3>
         <ul class="tools-list">
           <li>Burp Suite</li>
           <li>OWASP ZAP</li>
-          <li>Nmap / Nikto</li>
           <li>SQLMap</li>
-          <li>Amass / Sublist3r</li>
+          <li>Nmap / Amass</li>
           <li>Shodan / Maltego</li>
-          <li>Wireshark</li>
           <li>Postman</li>
+          <li>Wireshark</li>
+        </ul>
+      </div>
+
+      <div class="sidebar-block">
+        <h3>Elsewhere</h3>
+        <ul class="tools-list">
+          <li><a href="https://github.com/midgetpool" target="_blank" rel="noopener">GitHub</a></li>
+          <li><a href="https://www.linkedin.com/in/angadsinghchandhok/" target="_blank" rel="noopener">LinkedIn</a></li>
+          <li><a href="https://tryhackme.com" target="_blank" rel="noopener">TryHackMe</a></li>
         </ul>
       </div>
     </aside>
-
-  </main>
+  </div>
 
   <footer class="footer">
-    <p>Angad Singh &nbsp;·&nbsp; Cybersecurity Specialist &nbsp;·&nbsp; Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
+    <p>Angad Singh · Cybersecurity Specialist · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
   </footer>
 
   <script src="assets/js/main.js"></script>
