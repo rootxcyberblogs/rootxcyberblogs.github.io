@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Google Dorking for Recon: Finding What Shouldn't Be Public — Angad Singh</title>
+  <title>Google Dorking for Recon: Finding What Shouldn't Be Public  </title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
@@ -13,7 +13,7 @@
 
   <nav class="nav">
     <div class="nav-inner">
-      <a href="../index.html" class="nav-logo">angadsingh.sec</a>
+      <a href="../index.html" class="nav-logo">rootxcyberblogs</a>
       <ul class="nav-links">
         <li><a href="../index.html" class="active">writing</a></li>
         <li><a href="../about.html">about</a></li>
@@ -30,17 +30,17 @@
         <span style="font-size:0.75rem;color:var(--ink-muted);">13 min read</span>
       </div>
       <h1 class="page-title">Google Dorking for Recon: Finding What Shouldn't Be Public</h1>
-      <p class="post-intro">During an engagement with an adhesive manufacturing company, Google dorking surfaced a vendor table with PII — directly accessible without authentication. A practical guide to structured recon.</p>
+      <p class="post-intro">During an engagement with an adhesive manufacturing company, Google dorking surfaced a vendor table with PII  directly accessible without authentication. A practical guide to structured recon.</p>
     </div>
 
     <div class="prose">
 
       <h2>Why recon matters more than most testers admit</h2>
-      <p>There's a tendency in penetration testing to rush toward the active phase — scanning, fuzzing, probing. Recon gets treated as a checkbox rather than a discipline. That's a mistake. Some of the most severe findings I've come across required no exploitation at all — just the patience to look at what was already publicly visible before touching a single endpoint.</p>
-      <p>This engagement is a good example. The client was an adhesive manufacturing company. Not a fintech, not a healthcare provider — a manufacturing business. The assumption from their side was that their web presence was low-risk. What Google had indexed told a different story.</p>
+      <p>There's a tendency in penetration testing to rush toward the active phase  scanning, fuzzing, probing. Recon gets treated as a checkbox rather than a discipline. That's a mistake. Some of the most severe findings I've come across required no exploitation at all  just the patience to look at what was already publicly visible before touching a single endpoint.</p>
+      <p>This engagement is a good example. The client was an adhesive manufacturing company. Not a fintech, not a healthcare provider  a manufacturing business. The assumption from their side was that their web presence was low-risk. What Google had indexed told a different story.</p>
 
       <h2>What is Google dorking?</h2>
-      <p>Google dorking — also called Google hacking — is the use of advanced search operators to find information that Google has indexed but that organisations didn't intend to expose publicly. The underlying mechanism is simple: Google crawls everything it can reach. If a page or file is publicly accessible and not explicitly excluded via <code>robots.txt</code> or meta tags, it gets indexed. The data is already out there — dorking just surfaces it systematically.</p>
+      <p>Google dorking  also called Google hacking  is the use of advanced search operators to find information that Google has indexed but that organisations didn't intend to expose publicly. The underlying mechanism is simple: Google crawls everything it can reach. If a page or file is publicly accessible and not explicitly excluded via <code>robots.txt</code> or meta tags, it gets indexed. The data is already out there  dorking just surfaces it systematically.</p>
       <p>The core operators worth knowing:</p>
 
       <pre><code>site:          restrict results to a specific domain
@@ -67,21 +67,21 @@ cache:         view Google's cached version of a page
       <p>These operators combine. That's where the power is.</p>
 
       <h2>The engagement: structured recon on a manufacturing domain</h2>
-      <p>Before touching the client's infrastructure, I ran a passive recon phase entirely through Google — no direct requests to their servers, nothing that would show up in their logs. The goal was to understand the surface area: subdomains indexed, file types exposed, pages that shouldn't be crawlable.</p>
+      <p>Before touching the client's infrastructure, I ran a passive recon phase entirely through Google  no direct requests to their servers, nothing that would show up in their logs. The goal was to understand the surface area: subdomains indexed, file types exposed, pages that shouldn't be crawlable.</p>
       <p>I started broad and narrowed down:</p>
 
       <pre><code>site:target-manufacturer.com</code></pre>
 
-      <p>This returned their main site, a few product pages, and — unexpectedly — a subdomain I hadn't seen in the initial scope brief. A vendor portal, apparently running a separate application.</p>
+      <p>This returned their main site, a few product pages, and  unexpectedly  a subdomain I hadn't seen in the initial scope brief. A vendor portal, apparently running a separate application.</p>
 
       <pre><code>site:vendors.target-manufacturer.com</code></pre>
 
-      <p>A handful of results. Most were login pages and marketing PDFs. One result stood out: a URL with a path that looked like a direct database view — <code>/vendors.target-manufacturer.com/reports/vendor_table?export=true</code>. The page title in the search result read "Vendor Directory — All Records."</p>
+      <p>A handful of results. Most were login pages and marketing PDFs. One result stood out: a URL with a path that looked like a direct database view  <code>/vendors.target-manufacturer.com/reports/vendor_table?export=true</code>. The page title in the search result read "Vendor Directory  All Records."</p>
 
       <h2>The finding: a vendor table behind no authentication</h2>
-      <p>I opened the URL. No redirect to a login page. No session check. The page loaded immediately and rendered a full HTML table — vendor company names, contact persons, email addresses, phone numbers, and physical addresses. Hundreds of records. All of it PII belonging to the client's supplier network.</p>
-      <p>The page had an <code>export=true</code> parameter in the URL. I tried <code>export=csv</code> — it returned the entire dataset as a downloadable CSV file, still without any authentication prompt.</p>
-      <p>The URL structure suggested this was a reporting view generated by a backend admin tool — something likely intended for internal use only, perhaps shared with a vendor manager via a direct link at some point. At some stage, the path had become crawlable. Google indexed it. It had been sitting there, publicly accessible, for who knows how long.</p>
+      <p>I opened the URL. No redirect to a login page. No session check. The page loaded immediately and rendered a full HTML table  vendor company names, contact persons, email addresses, phone numbers, and physical addresses. Hundreds of records. All of it PII belonging to the client's supplier network.</p>
+      <p>The page had an <code>export=true</code> parameter in the URL. I tried <code>export=csv</code>  it returned the entire dataset as a downloadable CSV file, still without any authentication prompt.</p>
+      <p>The URL structure suggested this was a reporting view generated by a backend admin tool  something likely intended for internal use only, perhaps shared with a vendor manager via a direct link at some point. At some stage, the path had become crawlable. Google indexed it. It had been sitting there, publicly accessible, for who knows how long.</p>
 
       <h2>Extending the dork: what else was out there</h2>
       <p>Once I had a confirmed finding on the vendor subdomain, I widened the search to see what else the domain family was leaking:</p>
@@ -92,7 +92,7 @@ site:target-manufacturer.com inurl:report
 site:target-manufacturer.com inurl:backup
 site:target-manufacturer.com intitle:"index of"</code></pre>
 
-      <p>The <code>intitle:"index of"</code> dork is particularly useful — it finds open directory listings where the web server is serving file trees without an index page. In this case it returned nothing, but it's worth running on every engagement. Exposed backup files (<code>.bak</code>, <code>.sql</code>, <code>.old</code>) and configuration files (<code>.env</code>, <code>config.php</code>) are among the most damaging findings in this category and they surface regularly.</p>
+      <p>The <code>intitle:"index of"</code> dork is particularly useful  it finds open directory listings where the web server is serving file trees without an index page. In this case it returned nothing, but it's worth running on every engagement. Exposed backup files (<code>.bak</code>, <code>.sql</code>, <code>.old</code>) and configuration files (<code>.env</code>, <code>config.php</code>) are among the most damaging findings in this category and they surface regularly.</p>
       <p>A few additional operators I use as standard:</p>
 
       <pre><code>site:target.com ext:env
@@ -105,25 +105,25 @@ site:target.com intext:"API_KEY" OR intext:"api_key"</code></pre>
       <h2>Tools that extend passive recon beyond Google</h2>
       <p>Google dorking is a starting point, not the whole picture. I pair it with a few other passive sources during recon:</p>
       <ul>
-        <li><strong>Shodan</strong> — indexes internet-facing devices and services. Useful for finding exposed ports, service banners, and infrastructure that isn't part of the web application but is still in scope. A query like <code>org:"Target Company"</code> often surfaces servers the client forgot about.</li>
-        <li><strong>Wayback Machine (web.archive.org)</strong> — cached historical versions of pages. Useful when a sensitive URL has since been taken down — the content may still be in the archive. Also useful for finding old API endpoints that were deprecated but never properly removed from the live application.</li>
-        <li><strong>Amass / Sublist3r</strong> — subdomain enumeration. Google's <code>site:</code> operator finds what's indexed; these tools find what's resolvable. The vendor portal subdomain in this engagement would have appeared in Amass results even if Google hadn't indexed any pages on it.</li>
-        <li><strong>Maltego</strong> — relationship mapping. Connects domains, IPs, email addresses, and organisational data into a visual graph. Most useful when you need to understand a complex organisation's external footprint before scoping the active phase.</li>
+        <li><strong>Shodan</strong>  indexes internet-facing devices and services. Useful for finding exposed ports, service banners, and infrastructure that isn't part of the web application but is still in scope. A query like <code>org:"Target Company"</code> often surfaces servers the client forgot about.</li>
+        <li><strong>Wayback Machine (web.archive.org)</strong>  cached historical versions of pages. Useful when a sensitive URL has since been taken down  the content may still be in the archive. Also useful for finding old API endpoints that were deprecated but never properly removed from the live application.</li>
+        <li><strong>Amass / Sublist3r</strong>  subdomain enumeration. Google's <code>site:</code> operator finds what's indexed; these tools find what's resolvable. The vendor portal subdomain in this engagement would have appeared in Amass results even if Google hadn't indexed any pages on it.</li>
+        <li><strong>Maltego</strong>  relationship mapping. Connects domains, IPs, email addresses, and organisational data into a visual graph. Most useful when you need to understand a complex organisation's external footprint before scoping the active phase.</li>
       </ul>
 
       <h2>Impact</h2>
-      <p>The vendor table exposure was rated high severity. The data included full contact details for the client's entire supplier network — a dataset that a competitor or bad actor could use for targeted phishing, business email compromise, or simply selling. The client had no visibility that the page was publicly accessible. They assumed that because it "required a link to access," it was protected. Security by obscurity is not access control.</p>
+      <p>The vendor table exposure was rated high severity. The data included full contact details for the client's entire supplier network  a dataset that a competitor or bad actor could use for targeted phishing, business email compromise, or simply selling. The client had no visibility that the page was publicly accessible. They assumed that because it "required a link to access," it was protected. Security by obscurity is not access control.</p>
 
       <h2>Remediation</h2>
       <ul>
         <li><strong>Authentication on every internal view:</strong> Any page that renders business data should sit behind a session check, regardless of how it's accessed. Direct links are not a substitute for auth.</li>
-        <li><strong>robots.txt and noindex tags:</strong> Add <code>Disallow</code> rules in <code>robots.txt</code> for any path that shouldn't be crawled, and include <code>&lt;meta name="robots" content="noindex"&gt;</code> on sensitive pages. Note — this is a crawl instruction, not access control. It reduces exposure but doesn't replace authentication.</li>
+        <li><strong>robots.txt and noindex tags:</strong> Add <code>Disallow</code> rules in <code>robots.txt</code> for any path that shouldn't be crawled, and include <code>&lt;meta name="robots" content="noindex"&gt;</code> on sensitive pages. Note  this is a crawl instruction, not access control. It reduces exposure but doesn't replace authentication.</li>
         <li><strong>Regular Google dork audits:</strong> Run a <code>site:</code> search on your own domain periodically. If you find something unexpected in the results, so can an attacker. This takes ten minutes and catches a class of exposure that no internal scanner will find.</li>
         <li><strong>Remove export parameters from unauthenticated routes:</strong> The <code>export=csv</code> parameter compounded the issue significantly. Data export functionality must always require authentication and, where appropriate, audit logging.</li>
       </ul>
 
       <h2>Key takeaway</h2>
-      <p>The most uncomfortable finding you can deliver to a client is one where the data was already public — not because of a technical exploit, but because nobody checked. Google dorking costs nothing, requires no special tooling, and produces findings that are immediately understandable to non-technical stakeholders. Run it on every engagement, and run it on your own organisation too.</p>
+      <p>The most uncomfortable finding you can deliver to a client is one where the data was already public  not because of a technical exploit, but because nobody checked. Google dorking costs nothing, requires no special tooling, and produces findings that are immediately understandable to non-technical stakeholders. Run it on every engagement, and run it on your own organisation too.</p>
 
     </div>
 
@@ -131,7 +131,7 @@ site:target.com intext:"API_KEY" OR intext:"api_key"</code></pre>
   </div>
 
   <footer class="footer">
-    <p>Angad Singh · Cybersecurity Specialist · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
+    <p> · Cybersecurity Specialist · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
   </footer>
 
   <script src="../assets/js/main.js"></script>
