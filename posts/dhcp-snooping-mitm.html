@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Preventing MITM with DHCP Snooping and Port Security on Cisco Switches — Angad Singh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo">angadsingh.sec</a>
+      <ul class="nav-links">
+        <li><a href="../index.html" class="active">writing</a></li>
+        <li><a href="../about.html">about</a></li>
+        <li><a href="https://github.com/midgetpool" target="_blank" rel="noopener">github</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="page-wrap single">
+    <div class="post-header">
+      <div class="post-meta">
+        <span class="post-tag infra">infra</span>
+        <time>2025-03-10</time>
+        <span style="font-size:0.75rem;color:var(--ink-muted);">14 min read</span>
+      </div>
+      <h1 class="page-title">Preventing MITM with DHCP Snooping and Port Security on Cisco Switches</h1>
+      <p class="post-intro">I first demonstrated the attack — then locked it down. A practical guide to DHCP snooping and port-security configurations that stop ARP spoofing and rogue DHCP servers cold.</p>
+    </div>
+
+    <div class="prose">
+
+      <h2>The approach: attack first, defend second</h2>
+      <p>The most effective way to convince a network team that a control is necessary is to show them the attack working on their own infrastructure before you show them the fix. Abstract threat descriptions don't move people. Watching their own traffic appear in Wireshark — on a segment they thought was safe — does.</p>
+      <p>This post documents a network security project where I first demonstrated two MITM attack scenarios on a Cisco-switched environment, then implemented the switch-level controls that prevent them. The environment used Cisco Catalyst switches, but the concepts and IOS commands are broadly applicable across the Catalyst line.</p>
+
+      <h2>The two attack primitives</h2>
+      <p>Both attacks exploit the trust that Layer 2 networks place in broadcast traffic. On an unprotected switched network, any device can make claims about network identity — and other devices will believe them.</p>
+
+      <h2>Attack 1 — Rogue DHCP server</h2>
+      <p>When a device joins a network, it broadcasts a DHCP Discover packet looking for a server to assign it an IP address, gateway, and DNS server. On an unprotected network, any device on the segment can respond first. If an attacker spins up a rogue DHCP server, they can answer that Discover before the legitimate server does — handing the new device a gateway address that points to the attacker's machine instead of the real router.</p>
+      <p>Every packet that device sends to "the internet" flows through the attacker first. The user sees no disruption. The attacker sees everything.</p>
+      <p>I demonstrated this using a Linux machine running <code>dnsmasq</code> configured as a rogue DHCP server on the same VLAN as the target segment. A fresh device connecting to the network received the rogue gateway within the DHCP lease window. Traffic capture in Wireshark on the attacker machine confirmed full visibility into the victim's unencrypted traffic.</p>
+
+      <h2>Attack 2 — ARP spoofing</h2>
+      <p>ARP (Address Resolution Protocol) maps IP addresses to MAC addresses at Layer 2. It is stateless and unauthenticated — any device can send an unsolicited ARP reply claiming to be any IP address, and the receiving device will update its ARP cache accordingly.</p>
+      <p>ARP spoofing exploits this: the attacker sends gratuitous ARP replies to both the victim and the gateway, claiming to be the other party. The victim's ARP cache maps the gateway IP to the attacker's MAC. The gateway's ARP cache maps the victim IP to the attacker's MAC. All traffic between them now passes through the attacker — a classic man-in-the-middle position.</p>
+      <p>I demonstrated this using <code>arpspoof</code> from the dsniff toolkit, with IP forwarding enabled on the attacker machine so traffic continued flowing normally and the victim saw no connectivity loss:</p>
+
+      <pre><code># Enable IP forwarding so victim traffic still reaches the gateway
+echo 1 > /proc/sys/net/ipv4/ip_forward
+
+# Poison the victim's ARP cache — tell victim that gateway IP = attacker MAC
+arpspoof -i eth0 -t 192.168.1.50 192.168.1.1
+
+# Poison the gateway's ARP cache — tell gateway that victim IP = attacker MAC
+arpspoof -i eth0 -t 192.168.1.1 192.168.1.50</code></pre>
+
+      <p>Wireshark on the attacker machine captured the victim's full HTTP traffic, DNS queries, and unencrypted credentials within seconds of the attack starting. The victim's machine showed normal connectivity throughout.</p>
+
+      <h2>The fix: DHCP snooping</h2>
+      <p>DHCP snooping is a Cisco IOS feature that turns the switch into an enforcement point for DHCP traffic. It classifies every port as either <em>trusted</em> or <em>untrusted</em>:</p>
+      <ul>
+        <li><strong>Trusted ports</strong> are allowed to send DHCP server responses (DHCP Offer, DHCP Ack). These are uplinks to the legitimate DHCP server or to other switches in the network.</li>
+        <li><strong>Untrusted ports</strong> are end-device ports — workstations, printers, user devices. If a DHCP Offer or Ack arrives on an untrusted port, the switch drops it silently. A rogue DHCP server connected to an untrusted port cannot respond to clients.</li>
+      </ul>
+      <p>DHCP snooping also builds a binding table — a record of which MAC address received which IP address on which port. This table becomes the basis for Dynamic ARP Inspection.</p>
+
+      <pre><code>! Enable DHCP snooping globally
+ip dhcp snooping
+
+! Enable on the relevant VLAN(s)
+ip dhcp snooping vlan 10,20
+
+! Disable option-82 insertion if not required (avoids issues with some DHCP servers)
+no ip dhcp snooping information option
+
+! Mark the uplink to the legitimate DHCP server as trusted
+interface GigabitEthernet0/1
+ ip dhcp snooping trust
+
+! All other access ports are untrusted by default — no additional config needed
+! Verify the binding table is populating
+show ip dhcp snooping binding</code></pre>
+
+      <p>After enabling this, I re-ran the rogue DHCP server attack. The rogue responses were dropped at the port. The fresh device received its IP from the legitimate server only.</p>
+
+      <h2>The fix: Dynamic ARP Inspection (DAI)</h2>
+      <p>Dynamic ARP Inspection builds directly on the DHCP snooping binding table. It intercepts all ARP packets on untrusted ports and validates them against the binding table — if the IP-to-MAC mapping in the ARP packet doesn't match what DHCP snooping recorded for that port, the packet is dropped.</p>
+      <p>This stops ARP spoofing: the attacker can send gratuitous ARP replies all day, but the switch will drop any ARP packet claiming an IP-to-MAC mapping that contradicts its snooping table.</p>
+
+      <pre><code>! Enable DAI on the relevant VLANs
+ip arp inspection vlan 10,20
+
+! Trust the uplink ports (same ports trusted for DHCP snooping)
+interface GigabitEthernet0/1
+ ip arp inspection trust
+
+! Optional: rate-limit ARP packets on access ports to slow ARP flood attempts
+interface range GigabitEthernet0/2 - 48
+ ip arp inspection limit rate 100
+
+! Verify
+show ip arp inspection vlan 10
+show ip arp inspection statistics</code></pre>
+
+      <p>After enabling DAI, I re-ran the ARP spoofing attack. The switch dropped the spoofed ARP replies immediately. The victim's ARP cache retained the correct gateway mapping. Traffic capture on the attacker machine showed nothing.</p>
+
+      <h2>Port security: limiting the MAC address attack surface</h2>
+      <p>Port security is a separate but complementary control. It limits the number of MAC addresses that can be learned on a given port, and defines what happens when that limit is exceeded. This addresses a different class of attack — MAC flooding, where an attacker overwhelms the switch's CAM table with fake MAC addresses, causing it to fail open and broadcast traffic to all ports like a hub.</p>
+      <p>For access ports connected to single workstations, the configuration is straightforward:</p>
+
+      <pre><code>interface range GigabitEthernet0/2 - 48
+ switchport mode access
+ switchport port-security
+ ! Allow only one MAC address per port
+ switchport port-security maximum 1
+ ! Dynamically learn and sticky the first MAC seen
+ switchport port-security mac-address sticky
+ ! Shut down the port if a violation occurs
+ switchport port-security violation shutdown
+
+! Check current port security status
+show port-security interface GigabitEthernet0/5
+show port-security address</code></pre>
+
+      <p>The <code>sticky</code> option learns the first MAC address seen on the port and writes it into the running config — no manual entry needed per device, but any second MAC (a rogue device swapped in) triggers the violation action. <code>shutdown</code> is the most effective violation mode for security; <code>restrict</code> drops traffic and logs, <code>protect</code> only drops traffic silently.</p>
+      <p>One practical note: if a port enters err-disabled state due to a violation, it needs to be manually re-enabled unless you configure automatic recovery:</p>
+
+      <pre><code>errdisable recovery cause psecure-violation
+errdisable recovery interval 300</code></pre>
+
+      <h2>The full picture</h2>
+      <p>These three controls layer on each other. Port security limits which devices can talk on a port at all. DHCP snooping ensures only the legitimate DHCP server can hand out addresses. DAI ensures ARP packets accurately reflect what DHCP snooping recorded. An attacker who gets past one faces the next.</p>
+      <p>None of this is exotic configuration. It's all available on standard Cisco IOS, ships on every Catalyst switch, and takes under an hour to deploy on a typical access layer. The reason most networks don't have it is not complexity — it's that it's never been prioritised until someone demonstrates the attack on a Friday afternoon.</p>
+
+      <h2>Key takeaway</h2>
+      <p>Layer 2 attacks are underappreciated in environments where the threat model focuses on perimeter and application security. An attacker with physical or logical access to a network segment — a contractor laptop, a compromised IoT device, a visitor VLAN that isn't properly isolated — can position themselves between any two hosts in minutes on an unprotected switched network. DHCP snooping, DAI, and port security are the standard answer. They should be baseline configuration on every access layer switch, not an optional hardening step.</p>
+
+    </div>
+
+    <a class="back-link" href="../index.html">← Back to writing</a>
+  </div>
+
+  <footer class="footer">
+    <p>Angad Singh · Cybersecurity Specialist · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
