@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Union-Based SQL Injection — Angad Singh</title>
+  <title>Union-Based SQL Injection  </title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
@@ -13,7 +13,7 @@
 
   <nav class="nav">
     <div class="nav-inner">
-      <a href="../index.html" class="nav-logo">angadsingh.sec</a>
+      <a href="../index.html" class="nav-logo">rootxcyberblogs</a>
       <ul class="nav-links">
         <li><a href="../index.html" class="active">writing</a></li>
         <li><a href="../about.html">about</a></li>
@@ -30,12 +30,12 @@
         <span style="font-size:0.75rem;color:var(--ink-muted);">10 min read</span>
       </div>
       <h1 class="page-title">Union-Based SQL Injection: From Discovery to Database Dump</h1>
-      <p class="post-intro">How I discovered a union-based SQLi in a login panel during an engagement — the recon steps, payload crafting, and how it exposed full read/write access to the database.</p>
+      <p class="post-intro">How I discovered a union-based SQLi in a login panel during an engagement  the recon steps, payload crafting, and how it exposed full read/write access to the database.</p>
     </div>
 
     <div class="prose">
       <h2>Background</h2>
-      <p>During a black-box web application assessment for a client, I came across a standard login panel. No WAF detected in initial probing, input fields were reflecting errors verbosely — classic conditions for SQL injection testing.</p>
+      <p>During a black-box web application assessment for a client, I came across a standard login panel. No WAF detected in initial probing, input fields were reflecting errors verbosely  classic conditions for SQL injection testing.</p>
 
       <h2>Detection</h2>
       <p>A single quote in the username field returned a database error. That confirmed unsanitised input was hitting the query directly. I then tested for the number of columns using <code>ORDER BY</code>:</p>
@@ -61,17 +61,17 @@
       <p>The vulnerability allowed full SELECT, INSERT, UPDATE, and DROP operations on the application database. User credentials, PII, and internal records were all accessible. I documented the full exploitation chain and reported it with a PoC before any data was extracted beyond what was needed to confirm severity.</p>
 
       <h2>Remediation</h2>
-      <p>The fix is well-understood: parameterised queries (prepared statements) eliminate this class of vulnerability entirely. Additionally, the application's database user had far more privileges than needed — principle of least privilege should apply at the DB layer too.</p>
+      <p>The fix is well-understood: parameterised queries (prepared statements) eliminate this class of vulnerability entirely. Additionally, the application's database user had far more privileges than needed  principle of least privilege should apply at the DB layer too.</p>
 
       <h2>Key takeaway</h2>
-      <p>Verbose error messages are a gift to an attacker. Even if you patch the injection, suppress database errors in production — they hand over the database structure on a plate.</p>
+      <p>Verbose error messages are a gift to an attacker. Even if you patch the injection, suppress database errors in production  they hand over the database structure on a plate.</p>
     </div>
 
     <a class="back-link" href="../index.html">← Back to writing</a>
   </div>
 
   <footer class="footer">
-    <p>Angad Singh · Cybersecurity Specialist · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
+    <p> · Cybersecurity Specialist · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
   </footer>
 
   <script src="../assets/js/main.js"></script>
