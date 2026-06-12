@@ -1,65 +1,101 @@
-# 0xBlog — Cybersecurity Research Blog
+# rootxcyberblogs
 
-A minimal, terminal-aesthetic static blog built for GitHub Pages. No build tools, no frameworks — just HTML, CSS, and a bit of vanilla JS.
+A personal cybersecurity blog by **Angad Singh** — Cybersecurity Specialist, Penetration Tester, and Ethical Hacker.
 
-## 🗂 Structure
+Live at: [rootxcyberblogs.github.io](https://rootxcyberblogs.github.io)
+
+---
+
+## About the blog
+
+This is a technical writing space — not a portfolio, not a showcase. Every post comes from real engagement experience: vulnerabilities found during actual penetration tests, network security projects, and hands-on research. The goal is to document findings in enough depth that they're useful to other security practitioners, not just proof that the work happened.
+
+Posts focus on the *why* behind a vulnerability and the *how* behind exploiting and fixing it — not just a list of steps.
+
+---
+
+## Areas covered
+
+**Web Application Security**
+- OWASP Top 10 vulnerabilities in real-world contexts
+- Authentication and authorisation bypass (OTP bypass, session manipulation)
+- Injection attacks — SQL injection, stored/reflected XSS
+- Insecure Direct Object Reference (IDOR) across REST and GraphQL APIs
+- Business logic flaws and access control failures
+- API security testing — GraphQL, REST, Postman-based analysis
+
+**OSINT and Reconnaissance**
+- Google dorking and advanced search operator techniques
+- Subdomain enumeration and attack surface mapping
+- Passive recon methodologies using Shodan, Maltego, Amass, and Sublist3r
+- Information leakage — exposed files, misconfigured directories, verbose errors
+
+**Network and Infrastructure Security**
+- Layer 2 attack demonstrations and mitigations (ARP spoofing, rogue DHCP)
+- DHCP snooping, Dynamic ARP Inspection, and port security on Cisco switches
+- Firewall configuration and network segmentation
+- Vulnerability assessment and infrastructure hardening
+
+**Tools and Techniques**
+- Burp Suite workflows for web application testing
+- SQLMap, Nikto, Nmap usage in structured assessments
+- Wireshark for traffic analysis and attack validation
+- Python and Bash scripting for security automation
+- Report writing and vulnerability documentation
+
+**CTF Writeups**
+- TryHackMe room walkthroughs
+- HackerOne report breakdowns (sanitised)
+- Methodology notes from competition-style challenges
+
+---
+
+## Structure
 
 ```
-cyberblog/
-├── index.html          ← Homepage (post list)
-├── about.html          ← About page
-├── posts/
-│   └── buffer-overflow-101.html   ← Example post
+rootxcyberblogs/
+├── index.html          ← post index
+├── about.html          ← background and contact
+├── posts/              ← individual post pages
+│   ├── sqli-union-attack.html
+│   ├── idor-graphql.html
+│   ├── otp-bypass-auth.html
+│   ├── google-dorking-recon.html
+│   ├── stored-xss-crm.html
+│   └── dhcp-snooping-mitm.html
 ├── assets/
 │   ├── css/style.css
 │   └── js/main.js
 └── README.md
 ```
 
-## 🚀 Deploying to GitHub Pages
+---
 
-### Option A — Root of `main` branch (simplest)
+## Adding a new post
 
-1. Create a GitHub repo named `yourusername.github.io`
-2. Upload all files to the root of the `main` branch
-3. GitHub Pages will automatically serve it at `https://yourusername.github.io`
+1. Copy any existing file in `posts/` as a template
+2. Update the title, date, tag, and content
+3. Add a matching `<article class="post-card">` block in `index.html`
+4. Commit and push — GitHub Pages deploys automatically
 
-### Option B — `/docs` folder or separate `gh-pages` branch
+Post tags available: `web`, `api`, `osint`, `infra`, `ctf`
 
-1. Create any repo (e.g. `blog`)
-2. Go to **Settings → Pages**
-3. Set source to `main` branch, `/docs` folder (or push to `gh-pages` branch)
-4. Your site will be at `https://yourusername.github.io/blog`
+---
 
-### Quick Deploy via CLI
+## Tech
 
-```bash
-git init
-git add .
-git commit -m "initial blog setup"
-git remote add origin https://github.com/yourusername/yourusername.github.io.git
-git push -u origin main
-```
+Pure static HTML, CSS, and vanilla JavaScript. No build tools, no dependencies, no frameworks. Hosted on GitHub Pages.
 
-## ✏️ Writing a New Post
+Fonts: DM Serif Display (post titles) · Inter (body) · Share Tech Mono (code and nav)
 
-1. Copy `posts/buffer-overflow-101.html` to `posts/your-post-slug.html`
-2. Update the title, meta, tag, date, and content inside
-3. Add a new `<article class="post-card">` block in `index.html` pointing to your new post
-4. Commit and push — GitHub Pages updates automatically
+---
 
-## 🎨 Customising
+## Connect
 
-| What | Where |
-|------|-------|
-| Site name | Change `0xBlog` in all `<nav>` blocks |
-| Colors | CSS variables at the top of `assets/css/style.css` |
-| Nav links | `<ul class="nav-links">` in each page |
-| About info | `about.html` terminal block and prose |
-| Footer | `<footer class="footer">` in each page |
+- LinkedIn: [angadsinghchandhok](https://www.linkedin.com/in/angadsinghchandhok/)
+- GitHub: [midgetpool](https://github.com/midgetpool)
+- HackerOne: 11 reports submitted
 
-## 📝 Post Tags
+---
 
-Predefined tag styles: `tag-pwn`, `tag-web`, `tag-re`, `tag-ctf`, `tag-net`
-
-Add more in `style.css` following the same pattern.
+*All vulnerability details published here are from authorised engagements or disclosed through responsible disclosure processes. Nothing on this blog facilitates or encourages unauthorised access.*
