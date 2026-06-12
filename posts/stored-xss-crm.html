@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stored XSS in a CRM Portal: From Notes Field to UI Defacement — Angad Singh</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo">angadsingh.sec</a>
+      <ul class="nav-links">
+        <li><a href="../index.html" class="active">writing</a></li>
+        <li><a href="../about.html">about</a></li>
+        <li><a href="https://github.com/midgetpool" target="_blank" rel="noopener">github</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="page-wrap single">
+    <div class="post-header">
+      <div class="post-meta">
+        <span class="post-tag web">web</span>
+        <time>2025-03-30</time>
+        <span style="font-size:0.75rem;color:var(--ink-muted);">11 min read</span>
+      </div>
+      <h1 class="page-title">Stored XSS in a CRM Portal: From Notes Field to UI Defacement</h1>
+      <p class="post-intro">How injecting a payload into a seemingly innocuous notes field in a quick-commerce CRM caused full defacement of the user interface — and why stored XSS is still underestimated.</p>
+    </div>
+
+    <div class="prose">
+
+      <h2>The underestimation problem</h2>
+      <p>Cross-site scripting has been on the OWASP Top 10 for over two decades. Developers know the name. Security awareness training mentions it. And yet, in practice, XSS findings — particularly stored XSS — are still frequently triaged as medium or low severity by development teams who've internalised a shallow version of what the vulnerability does. "It just shows an alert box" is the most dangerous sentence in web security.</p>
+      <p>This engagement changed how at least one team thought about it. The client was a quick-commerce company — a fast-delivery startup with an internal CRM used by their operations and delivery management teams. The notes field was there to let agents leave comments on customer orders. It was never meant to be a vector for anything.</p>
+
+      <h2>Finding the injection point</h2>
+      <p>My approach to XSS testing on any application with text input is methodical — I don't immediately throw payloads. I first observe how the application handles input: does it reflect it immediately, store it and render later, pass it to another user's view, or send it in emails or notifications? The rendering context determines the payload and, more importantly, the real-world impact.</p>
+      <p>In the CRM, the notes field on an order record accepted free text and stored it. When any agent opened that order record, the note was rendered in the order detail panel. That's the key characteristic of stored XSS: the payload executes in the browser of every user who views the affected page — not just the person who submitted it.</p>
+      <p>I started with a basic probe to check whether output was being encoded:</p>
+
+      <pre><code>&lt;script&gt;alert(1)&lt;/script&gt;</code></pre>
+
+      <p>No execution — the script tags appeared as literal text in the rendered note. The application was stripping or encoding <code>&lt;script&gt;</code> tags. That's a common partial fix and a common false finish line for developers. The input was still injectable; only one vector was blocked.</p>
+
+      <h2>Bypassing the filter</h2>
+      <p>When <code>&lt;script&gt;</code> tags are filtered, the next step is testing event-handler injection — HTML attributes that execute JavaScript without needing a script element:</p>
+
+      <pre><code>&lt;img src=x onerror=alert(1)&gt;</code></pre>
+
+      <p>The image tag rendered. The <code>src=x</code> triggered a failed load. The <code>onerror</code> handler fired. The alert executed.</p>
+      <p>The filter was blocking script tags specifically — a blocklist approach rather than a proper output encoding or allowlist approach. Any HTML tag with a JavaScript event handler bypassed it entirely. This is a textbook example of why blocklist-based XSS filters consistently fail: the attack surface is too large to enumerate. There are dozens of HTML elements and hundreds of event attributes that can carry JavaScript. You can't block them all reliably.</p>
+
+      <h2>Escalating to UI defacement</h2>
+      <p>An alert box confirms execution — it's a PoC, nothing more. To demonstrate real impact to the client, I escalated to a payload that showed what an attacker could actually do with arbitrary JavaScript execution in an authenticated agent's browser session.</p>
+      <p>The defacement payload replaced the entire content of the order detail panel with attacker-controlled HTML:</p>
+
+      <pre><code>&lt;img src=x onerror="
+  document.body.innerHTML = '&lt;div style=\'
+    position:fixed;top:0;left:0;width:100%;height:100%;
+    background:#111;display:flex;align-items:center;
+    justify-content:center;z-index:9999;
+  \'&gt;&lt;h1 style=\'color:#fff;font-family:monospace\'&gt;
+    [Defaced — XSS PoC by Angad Singh]
+  &lt;/h1&gt;&lt;/div&gt;'
+"&gt;</code></pre>
+
+      <p>When any agent opened the affected order record, their entire CRM view was replaced. The legitimate interface was gone. Every element — navigation, order data, action buttons — was wiped and replaced with the injected content.</p>
+      <p>The payload was stored in the database. Every agent who loaded that order saw the defacement. It persisted until the note was deleted.</p>
+
+      <h2>What an attacker would actually do</h2>
+      <p>Defacement is a demonstrative PoC — it's visually convincing for a report but not what a malicious actor would deploy. With the same injection point, a real attacker has several more damaging options:</p>
+      <ul>
+        <li><strong>Session token theft:</strong> <code>document.cookie</code> can be exfiltrated to an attacker-controlled server via a fetch or image request. Any agent who views the page loses their session — the attacker can then replay that token and operate as that agent inside the CRM.</li>
+        <li><strong>Credential harvesting:</strong> An overlay mimicking a login prompt ("Your session has expired — please log in again") can capture credentials from agents who don't notice the URL hasn't changed.</li>
+        <li><strong>Keylogging:</strong> <code>document.addEventListener('keydown', ...)</code> captures everything typed while the injected script is active — including passwords entered into other fields on the page.</li>
+        <li><strong>Internal recon:</strong> JavaScript running in an authenticated session can make authenticated API requests, enumerate internal endpoints, and exfiltrate data that would otherwise require credentials to access.</li>
+      </ul>
+      <p>The notes field looked low-risk. In an internal CRM used by operations staff, it was a direct path to every authenticated session that touched an affected order record.</p>
+
+      <h2>Why CRM applications are high-value XSS targets</h2>
+      <p>CRMs and internal operations tools are often deprioritised in security reviews because they're "internal." But internal doesn't mean low-risk — it often means the opposite. These applications typically:</p>
+      <ul>
+        <li>Hold customer PII at scale</li>
+        <li>Are accessed by large numbers of staff with varying security awareness</li>
+        <li>Have broad permissions — an agent's session can do a lot</li>
+        <li>Were built under speed pressure, with security as an afterthought</li>
+        <li>Receive fewer penetration tests than customer-facing applications</li>
+      </ul>
+      <p>A stored XSS in a customer-facing app affects whoever visits a public page. A stored XSS in an internal CRM affects authenticated staff — people whose sessions have real access to real data and real actions.</p>
+
+      <h2>Remediation</h2>
+      <ul>
+        <li><strong>Output encoding, not input filtering:</strong> The correct fix for XSS is encoding output at render time, not stripping input on the way in. Use your framework's built-in templating engine with auto-escaping enabled — React, Angular, and Django templates all handle this by default if you don't bypass them. If the notes field renders as text, encode all HTML entities: <code>&amp;</code> → <code>&amp;amp;</code>, <code>&lt;</code> → <code>&amp;lt;</code>, and so on.</li>
+        <li><strong>Content Security Policy (CSP):</strong> A properly configured CSP header restricts what scripts can execute and where data can be sent. A strict policy (<code>script-src 'self'</code>, no <code>unsafe-inline</code>) would have prevented the <code>onerror</code> handler from executing entirely, even with the injection present. CSP is a defence-in-depth measure — it doesn't replace encoding, but it substantially raises the bar for exploitation.</li>
+        <li><strong>HttpOnly cookies:</strong> Set the <code>HttpOnly</code> flag on session cookies. This prevents <code>document.cookie</code> access from JavaScript, which blocks the most common XSS-to-session-theft path. It doesn't stop all XSS impact, but it removes the easiest escalation route.</li>
+        <li><strong>Rich text sanitisation:</strong> If the notes field genuinely needs to support formatting (bold, links), use a server-side HTML sanitisation library — DOMPurify on the client, or Bleach in Python — with a strict allowlist of permitted tags and attributes. Never use a custom blocklist.</li>
+      </ul>
+
+      <h2>Key takeaway</h2>
+      <p>Stored XSS in an internal tool is not a low-severity finding. The severity of XSS is determined by what the injected script can do in the context of the affected session — and in a CRM used by operations staff, that context is significant. If you're triaging XSS findings on internal applications, think past the alert box. Think about what an authenticated session in that application is capable of, and ask whether arbitrary JavaScript execution in that context is really a medium.</p>
+
+    </div>
+
+    <a class="back-link" href="../index.html">← Back to writing</a>
+  </div>
+
+  <footer class="footer">
+    <p>Angad Singh · Cybersecurity Specialist · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
