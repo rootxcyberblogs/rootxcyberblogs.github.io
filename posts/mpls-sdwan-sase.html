@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MPLS, SD-WAN, and SASE: How Enterprise Networks Evolved and Why It Matters for Security</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="../assets/css/style.css" />
+</head>
+<body>
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="../index.html" class="nav-logo">rootxcyberblogs</a>
+      <ul class="nav-links">
+        <li><a href="../index.html" class="active">writing</a></li>
+        <li><a href="../about.html">about</a></li>
+        <li><a href="https://github.com/midgetpool" target="_blank" rel="noopener">github</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <div class="page-wrap single">
+    <div class="post-header">
+      <div class="post-meta">
+        <span class="post-tag infra">infra</span>
+        <time>2025-06-26</time>
+        <span style="font-size:0.75rem;color:var(--ink-muted);">18 min read</span>
+      </div>
+      <h1 class="page-title">MPLS, SD-WAN, and SASE: How Enterprise Networks Evolved and Why It Matters for Security</h1>
+      <p class="post-intro">Most security practitioners focus on the application and endpoint layers. But the WAN — how your enterprise branches, data centers, and cloud workloads actually talk to each other — is foundational infrastructure that shapes your attack surface, your traffic visibility, and your ability to enforce policy. This post traces the evolution from MPLS through SD-WAN to SASE, and explains why each transition matters from a security standpoint.</p>
+    </div>
+
+    <div class="prose">
+
+      <h2>Why WAN architecture matters to security teams</h2>
+      <p>When MPLS was the dominant enterprise WAN technology, the network perimeter was well-defined. Traffic entered and exited through a small number of choke points — typically a data center with a firewall stack. Branches were private, isolated, and relatively easy to reason about. Security was concentrated at the edge.</p>
+      <p>SD-WAN changed that. Branches gained direct internet access. Traffic started leaving corporate infrastructure at dozens of points instead of one or two. And cloud adoption meant that traffic was heading to SaaS platforms, IaaS providers, and CDN edges — entirely outside the traditional perimeter. The security model that worked for MPLS broke almost immediately.</p>
+      <p>Understanding what MPLS is, how SD-WAN replaced it, and what SASE attempts to do about the resulting security gap is not just networking theory — it is essential context for anyone working on enterprise infrastructure security.</p>
+
+      <h2>Part 1: MPLS — private circuits, labels, and the illusion of security by isolation</h2>
+      <p>MPLS stands for Multi-Protocol Label Switching. It was the dominant enterprise WAN technology from the late 1990s through the 2010s, and is still widely deployed today. The core idea is straightforward: instead of every router along a path re-evaluating the full destination IP address on every packet, a short label is attached at the network entry point. Intermediate routers read only the label — a fast, constant-time lookup — and forward the packet accordingly.</p>
+
+      <h2>How label switching works</h2>
+      <p>The MPLS shim header sits between Layer 2 (Ethernet) and Layer 3 (IP). It is 32 bits total:</p>
+
+      <pre><code> 0                   1                   2                   3
+ 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+|                Label (20 bits)              | TC |S|    TTL   |
++-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+</code></pre>
+
+      <ul>
+        <li><strong>Label (20 bits)</strong> — the forwarding decision. Swapped at each hop by P routers.</li>
+        <li><strong>TC (3 bits)</strong> — Traffic Class, used for QoS. Maps to 8 per-hop behaviour classes (EF, AF1x, AF2x, BE).</li>
+        <li><strong>S (1 bit)</strong> — Bottom of Stack. Set to 1 on the innermost label. Enables label stacking for VPNs.</li>
+        <li><strong>TTL (8 bits)</strong> — standard time-to-live, prevents forwarding loops.</li>
+      </ul>
+
+      <p>The three device roles in an MPLS network:</p>
+      <ul>
+        <li><strong>CE (Customer Edge)</strong> — your office router. Connects to the provider. Has no knowledge of MPLS labels.</li>
+        <li><strong>PE (Provider Edge)</strong> — the carrier's border router. Imposes (adds) or disposes (removes) labels. Maintains per-customer VRFs.</li>
+        <li><strong>P (Provider Core)</strong> — interior carrier routers. Only read and swap labels. Never touch IP headers.</li>
+      </ul>
+
+      <p>Labels are distributed using LDP (Label Distribution Protocol) or RSVP-TE for traffic-engineered paths. LDP follows IGP routing; RSVP-TE allows explicit path constraints and bandwidth reservation along a specific LSP (Label Switched Path).</p>
+
+      <h2>MPLS VPNs and VRF isolation</h2>
+      <p>The commercial application that made MPLS ubiquitous is L3VPN. A single carrier MPLS backbone can host hundreds of enterprise customers with full routing isolation between them. This is achieved through VRFs — Virtual Routing and Forwarding instances.</p>
+      <p>Each enterprise customer gets a dedicated VRF on every PE router they connect to. VRFs have completely separate routing tables, forwarding tables, and interface assignments. Two customers can use overlapping address space (both using <code>10.0.0.0/8</code>) without conflict because their VRFs never intersect.</p>
+      <p>Label stacking makes this work end-to-end. The outer label routes the packet through the MPLS core to the correct destination PE. The inner label (the VPN label) tells the egress PE which VRF to deliver the packet into. The outer label is stripped one hop before the egress PE — a behaviour called Penultimate Hop Popping (PHP) — so the egress PE only sees the VPN label and processes it directly.</p>
+
+      <pre><code>Outer label (transport): routes to egress PE through the MPLS core
+Inner label (VPN):        identifies the customer VRF on the egress PE
+
+PHP (Penultimate Hop Popping):
+  The P router one hop before egress strips the outer transport label.
+  The egress PE receives only the inner VPN label — reduces PE lookup overhead.</code></pre>
+
+      <h2>QoS in MPLS — the reason enterprises paid for it</h2>
+      <p>The 3-bit TC field maps to a DSCP class. At the ingress PE, DSCP markings in the IP header are mapped to MPLS TC values. Core routers make scheduling decisions based on TC — Expedited Forwarding (voice) gets the highest priority queue; Best Effort (backups) gets what is left over.</p>
+      <p>This gave enterprises something genuinely valuable: guaranteed, consistent latency and jitter for voice and video, even under congestion. On a private carrier network with a signed SLA, this was predictable in a way that the public internet simply was not. A typical enterprise QoS mapping:</p>
+      <ul>
+        <li><strong>EF (Expedited Forwarding)</strong> — VoIP, real-time voice. Highest priority, minimal queue depth.</li>
+        <li><strong>AF41</strong> — video conferencing. High priority, jitter-sensitive.</li>
+        <li><strong>AF21</strong> — business-critical apps (ERP, CRM). Medium-high priority.</li>
+        <li><strong>AF11</strong> — standard data, email, file transfer. Medium priority.</li>
+        <li><strong>BE (Best Effort)</strong> — backups, software updates. Gets whatever bandwidth remains.</li>
+      </ul>
+
+      <h2>The security posture of MPLS</h2>
+      <p>MPLS is not encrypted. Traffic is carried in cleartext within the carrier network. The isolation guarantee is logical — VRF separation — not cryptographic. What MPLS offers is privacy through controlled infrastructure access, not confidentiality through encryption.</p>
+      <p>For most enterprise use cases, this was acceptable. The attack surface was small: a threat actor would need physical or logical access to the carrier's own infrastructure to intercept traffic. That is a high bar. But it is worth being precise about: MPLS provides isolation, not encryption. If a carrier is compromised — or is compelled — your traffic is visible in cleartext.</p>
+      <p>The other limitation that became critical as cloud adoption grew: all traffic must route through the corporate data center before reaching the internet. A branch in Bangalore accessing Office 365 would hairpin all the way to the Mumbai DC and back out to Microsoft's servers — adding hundreds of milliseconds of unnecessary latency on an already expensive circuit.</p>
+
+      <h2>Part 2: SD-WAN — software-defined control, commodity transports, and a new attack surface</h2>
+      <p>By 2015, two things had happened. Broadband internet had become cheap and widely available, with performance approaching MPLS on a cost-per-megabit basis. And enterprise application traffic had shifted heavily toward cloud SaaS — Office 365, Salesforce, ServiceNow — traffic that was heading to the internet anyway, being backhauled through expensive MPLS circuits to a data center just to exit to the internet from a centralized firewall stack.</p>
+      <p>SD-WAN addressed both problems by separating the network control plane from the data plane and allowing any transport — MPLS, broadband, 4G LTE, 5G, satellite — to be used simultaneously, with intelligent application-aware routing across them.</p>
+
+      <h2>Architecture: the three planes</h2>
+      <ul>
+        <li><strong>Management plane</strong> — a cloud-hosted or on-premises orchestration platform (e.g., Cisco vManage, VMware Orchestrator, Palo Alto Panorama). Single pane of glass for configuration, monitoring, and policy across the entire WAN.</li>
+        <li><strong>Control plane</strong> — a centralised controller (e.g., Cisco vSmart) that maintains routing and policy state for the entire overlay. Distributes routes and policies to all edge devices using OMP (Overlay Management Protocol) in Cisco's implementation.</li>
+        <li><strong>Data plane</strong> — edge appliances (vEdge, cEdge) at each branch. Execute forwarding decisions based on policies received from the controller, continuously measure transport quality via BFD probes, and maintain encrypted IPsec tunnels between sites.</li>
+      </ul>
+
+      <h2>OMP and the overlay routing model</h2>
+      <p>In Cisco SD-WAN, OMP is the routing protocol between the vSmart controller and edge devices. OMP carries three route types:</p>
+      <ul>
+        <li><strong>vRoutes</strong> — overlay prefixes reachable behind each edge (the actual subnets at each site).</li>
+        <li><strong>TLOC routes</strong> — Transport Locator routes. Identify the physical tunnel endpoints and transport colors (e.g., <code>mpls</code>, <code>biz-internet</code>, <code>lte</code>). Edges use TLOC information to build IPsec tunnels to each other across each available transport.</li>
+        <li><strong>Service routes</strong> — routes to shared services inserted in the traffic path: firewalls, proxies, IDS/IPS in service chaining.</li>
+      </ul>
+      <p>The controller acts as a route reflector for OMP. It applies centralised policy and distributes modified routing information to edges. Edges never peer directly with each other for control plane purposes — all control communication goes through the controller. This makes the controller a critical single point of trust for the entire overlay.</p>
+
+      <h2>Application-aware routing and path selection</h2>
+      <p>Each edge device continuously probes all active transports using BFD tunnels, measuring latency, jitter, and packet loss per transport in real time. App-aware routing policies define SLA thresholds per application class and specify which transport to prefer and which to fail over to:</p>
+
+      <pre><code>policy
+  app-route-policy VOICE-POLICY
+    vpn-list ALL_VPNS
+    sequence 10
+      match
+        app-list VOICE_APPS        ! matches RTP, SIP traffic
+      action sla-class VOICE_SLA
+        preferred-color mpls       ! use MPLS if SLA is met
+        backup-color biz-internet  ! fail over to broadband if MPLS violates SLA
+  sla-class VOICE_SLA
+    loss    1                      ! max 1% packet loss
+    latency 150                    ! max 150ms one-way
+    jitter  30                     ! max 30ms jitter</code></pre>
+
+      <p>When a transport violates the SLA for a given class, traffic for that class is moved to the next-best transport within seconds — driven by BFD probe results — without human intervention. This is the core operational advantage over static MPLS routing.</p>
+
+      <h2>Zero-touch provisioning and the security implications</h2>
+      <p>SD-WAN edge devices support zero-touch provisioning (ZTP). A new device powers on, reaches the orchestrator over the internet using a pre-loaded certificate, authenticates, downloads its full configuration, and comes up — typically without on-site technical staff beyond plugging in cables.</p>
+      <p>The security implication worth noting: the ZTP bootstrap process and the ongoing controller-to-edge communication channel are critical trust relationships. The Cisco SD-WAN architecture uses a PKI with a root CA managed by the orchestrator; every component authenticates with signed certificates. Compromise of the controller or the CA is high-impact — an attacker with controller access can push arbitrary policy to all edges simultaneously, redirect traffic, or disable security controls across the entire WAN in one operation.</p>
+
+      <h2>The security gap SD-WAN opens</h2>
+      <p>With MPLS, all internet-bound traffic from branches was backhauled to a central data center and inspected by a centralised security stack before reaching the internet. Inefficient for cloud applications, but every packet passed through a controlled choke point.</p>
+      <p>SD-WAN's Direct Internet Access (DIA) feature breaks this model by design. Branches access SaaS applications directly from their local broadband link, bypassing the data center entirely. Latency drops. WAN cost drops. But the traffic no longer passes through your NGFW, your proxy, or your IDS stack.</p>
+      <p>The naive response is to tunnel all internet-bound traffic back to the data center security stack even when using SD-WAN. This works, but defeats most of the cost and performance benefits. The correct answer is to bring security to where the traffic is — which is the problem SASE addresses.</p>
+
+      <h2>Part 3: SASE — converging networking and security at the cloud edge</h2>
+      <p>SASE (Secure Access Service Edge, pronounced "sassy") is a framework coined by Gartner in 2019. The core idea: the functions previously performed by on-premises hardware at a data center choke point — firewall, web proxy, DLP, VPN gateway — should be delivered as a cloud service, distributed across Points of Presence (PoPs) globally, close to every user.</p>
+      <p>The shift in framing matters. Traditional security was location-centric: you secured the perimeter of a physical network. SASE is identity-centric: you secure the user, the device, and the session — regardless of where they are or what network they are on.</p>
+
+      <h2>The component stack</h2>
+      <p>SASE is not a single product. It is a convergence of several capabilities delivered from the same cloud platform:</p>
+      <ul>
+        <li><strong>SD-WAN</strong> — the networking layer. Intelligent routing, any-transport, application-aware. Already covered above.</li>
+        <li><strong>SWG (Secure Web Gateway)</strong> — SSL/TLS inspection, URL categorisation and filtering, malware scanning of web traffic. Replaces the on-premises web proxy. Applied to all user web traffic regardless of location.</li>
+        <li><strong>CASB (Cloud Access Security Broker)</strong> — visibility and control over SaaS application usage. Enforces DLP policies on data moving into or out of cloud apps. Detects shadow IT. Can operate inline (forward proxy) or via API integration with SaaS platforms.</li>
+        <li><strong>ZTNA (Zero Trust Network Access)</strong> — replaces site-to-site VPN for application access. Users are granted access to specific applications — not the entire network — based on identity, device posture, location, and other context signals. Access is re-evaluated continuously, not just at session establishment.</li>
+        <li><strong>FWaaS (Firewall as a Service)</strong> — a full Layer 7 NGFW delivered from the cloud. Deep packet inspection, IPS, application identification, and threat prevention on all traffic including encrypted traffic after TLS break-and-inspect.</li>
+        <li><strong>DNS Security</strong> — blocks resolution of malicious domains before a connection is established. The earliest possible intervention point for most malware, phishing, and C2 communication.</li>
+      </ul>
+      <p>All of these run simultaneously at each SASE PoP. A user's traffic — whether from a branch SD-WAN edge or a remote laptop with an agent installed — is tunneled to the nearest PoP, inspected by the full security stack, and forwarded to its destination.</p>
+
+      <h2>ZTNA in practice — why it matters more than it sounds</h2>
+      <p>The traditional enterprise VPN grants broad network access. Once authenticated, a remote user is effectively on the corporate LAN — able to reach any host, any port, any service that is not explicitly blocked. In a flat network, a single compromised remote device means an attacker can move laterally across the entire enterprise.</p>
+      <p>ZTNA inverts this. Access is granted per-application, not per-network. The architecture:</p>
+
+      <pre><code>User device (agent installed)
+  └─► SASE PoP (identity + device posture evaluated)
+        └─► If policy allows:
+              App connector (lightweight proxy at application edge)
+                └─► Application (never directly exposed to internet)
+
+Access denied if:
+  - Identity not verified via IdP (Okta, Azure AD, etc.)
+  - Device posture fails (MDM check, EDR status, patch level)
+  - Context signals out of policy (unusual location, time, behaviour)</code></pre>
+
+      <p>The application is never directly reachable from the internet. It has an outbound-only connection to the SASE PoP. The PoP brokers the session after verifying all signals. A compromised device with failed posture checks is denied even with valid credentials.</p>
+      <p>This meaningfully reduces blast radius. An attacker who compromises a remote user's device cannot scan the internal network, cannot reach any application beyond what the legitimate user is permitted to access, and cannot move laterally — they are confined to the brokered session scope.</p>
+
+      <h2>TLS inspection — the necessary compromise</h2>
+      <p>SWG and FWaaS both depend on TLS inspection to be effective. The majority of web traffic and an increasing fraction of malware C2 communication is encrypted. A security stack that cannot inspect TLS is nearly blind to modern threats.</p>
+      <p>TLS inspection in SASE works via a man-in-the-middle: the SASE PoP terminates the user's TLS session, inspects the cleartext content, then re-establishes a new TLS session to the destination. The PoP presents a certificate signed by an enterprise root CA that must be trusted by the end device — typically deployed via MDM or group policy.</p>
+      <p>The security and privacy implications are worth being explicit about. All HTTPS traffic — including authenticated sessions to banking sites, personal accounts, and healthcare portals — is decryptable by the SASE platform. Most enterprise SASE deployments maintain bypass lists for sensitive categories. Whether those lists are comprehensive, and what the SASE vendor does with decrypted data, are legitimate questions to ask during vendor evaluation.</p>
+
+      <h2>The SASE vendor landscape</h2>
+      <p>The market has consolidated around two architectural patterns:</p>
+      <ul>
+        <li><strong>Single-vendor SASE</strong> (e.g., Palo Alto Prisma SASE, Cisco SASE) — SD-WAN and the full security stack from one vendor. Tighter integration, single management plane, but deep lock-in. Best when the vendor's security stack matches your requirements end-to-end.</li>
+        <li><strong>Dual-vendor (SSE + SD-WAN)</strong> — a Security Service Edge platform (Zscaler, Netskope) providing the cloud security stack, integrated with a separate best-of-breed SD-WAN. More operational complexity, but allows independent selection for networking and security. Zscaler + Cisco SD-WAN is a common large-enterprise pattern.</li>
+      </ul>
+      <p>Zscaler's architecture is worth understanding as the reference implementation for SSE. Instead of routing all traffic through a central gateway, Zscaler operates a global mesh of PoPs (the Zero Trust Exchange). Traffic from any device — on-network or remote — is directed to the nearest PoP via a lightweight agent (ZCC on endpoints, GRE/IPsec tunnels from SD-WAN edges). The PoP performs the full inspection stack. The destination sees only Zscaler's PoP IP, not the user's actual source location.</p>
+
+      <h2>The security architecture across all three eras</h2>
+      <p>Mapping the key security dimensions across MPLS, SD-WAN, and SASE shows how each transition shifted the threat model:</p>
+      <ul>
+        <li><strong>Traffic model</strong> — MPLS: hub-and-spoke through the DC. SD-WAN: any-to-any with DIA at the branch. SASE: any-to-any with security enforcement at the cloud PoP.</li>
+        <li><strong>Security choke point</strong> — MPLS: DC perimeter firewall. SD-WAN: DC (degraded) or no inspection at DIA egress points. SASE: SASE PoP near every user.</li>
+        <li><strong>Remote access model</strong> — MPLS: site-to-site private circuits. SD-WAN: IPsec VPN to hub or DC. SASE: ZTNA, per-app, identity-based.</li>
+        <li><strong>Encryption</strong> — MPLS: none (carrier logical isolation). SD-WAN: IPsec between edges. SASE: TLS everywhere, break-and-inspect at PoP.</li>
+        <li><strong>Visibility</strong> — MPLS: DC traffic only. SD-WAN: DC plus partial (branch DIA is a blind spot). SASE: full — all traffic passes through PoP.</li>
+        <li><strong>Lateral movement risk</strong> — MPLS: high (flat trusted network once inside). SD-WAN: high (same). SASE: reduced via ZTNA micro-segmentation.</li>
+      </ul>
+
+      <h2>Key takeaway</h2>
+      <p>The evolution from MPLS to SD-WAN to SASE is not just a networking story — it is a direct response to the collapse of the network perimeter. Each transition introduced new capabilities and new security trade-offs.</p>
+      <p>MPLS gave you a private network with strong traffic isolation but no encryption, no cloud affinity, and a security model that broke the moment you needed direct internet access at branches. SD-WAN gave you cost efficiency, flexibility, and cloud-native routing, but opened dozens of new internet egress points that your legacy security stack could not cover. SASE attempts to close that gap by making security a cloud-delivered, identity-centric service that follows users rather than expecting users to route through a fixed perimeter.</p>
+      <p>None of these transitions fully solved the problem they inherited. MPLS still runs in parallel with SD-WAN in most large enterprises, and SASE deployments are often partial, with inconsistent coverage across device types and geographies. Understanding the architecture of each layer is the prerequisite for understanding where the gaps are, where traffic is uninspected, and where an attacker operating inside enterprise infrastructure actually has room to move.</p>
+
+    </div>
+
+    <a class="back-link" href="../index.html">← Back to writing</a>
+  </div>
+
+  <footer class="footer">
+    <p> · Cybersecurity Specialist · Hosted on <a href="https://pages.github.com" target="_blank" rel="noopener">GitHub Pages</a></p>
+  </footer>
+
+  <script src="../assets/js/main.js"></script>
+</body>
+</html>
